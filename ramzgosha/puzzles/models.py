@@ -15,9 +15,9 @@ class Puzzle(models.Model):
     answer = models.CharField(max_length=50, verbose_name="پاسخ")
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="طراح")
 
-    desc_definition = models.TextField(blank=True, verbose_name="توضیح تعریف")
-    desc_fodder = models.TextField(blank=True, verbose_name="توضیح مصالح (Fodder)")
-    desc_indicators = models.TextField(blank=True, verbose_name="توضیح نشانگرها")
+    desc_definition = models.TextField(blank=True, verbose_name="توضیح تعریف", null=True)
+    desc_fodder = models.TextField(blank=True, verbose_name="توضیح مصالح (Fodder)", null=True)
+    desc_indicators = models.TextField(blank=True, verbose_name="توضیح نشانگرها", null=True)
 
     def save(self, *args, **kwargs):
         if self.tagged_clue:
