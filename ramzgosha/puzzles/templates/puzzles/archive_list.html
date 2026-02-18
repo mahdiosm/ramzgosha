@@ -1,0 +1,103 @@
+<div class="archive" style="margin-top: 40px; margin-bottom: 50px; border-top: 1px solid #333; padding-top: 20px; text-align: center;">    <h3 style="border-bottom: 2px solid #e94560; display: inline-block; padding-bottom: 5px; margin-bottom: 20px;">
+        رمزهای گذشته
+    </h3>
+
+    <div id="archive-container" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        {% for p in past_puzzles %}
+            <a href="{% url 'play' p.date|date:'Y-m-d' %}" class="archive-item" style="
+                border: 2px solid #fff;
+                border-radius: 10px;
+                padding: 10px 15px;
+                background: #16213e;
+                font-size: 0.9rem;
+                min-width: 60px;
+                text-decoration: none;
+                color: white;
+                transition: transform 0.2s;">
+                <div style="color: #aaa; font-size: 0.8rem;">{{ p.date|date:"l" }}</div>
+                <div style="font-weight: bold; font-size: 1.1rem;">{{ p.date|date:"j F" }}</div>
+            </a>
+        {% empty %}
+            <p>آرشیوی موجود نیست.</p>
+        {% endfor %}
+    </div>
+
+    <button id="load-more-btn" style="
+        margin-top: 20px;
+        background: transparent;
+        border: 2px solid #e0b0ff;
+        color: #e0b0ff;
+        padding: 8px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+    ">
+        نمایش بیشتر &#8595;
+    </button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let offset = 5; // چون 5 تا رو همون اول نشون دادیم
+        const btn = document.getElementById('load-more-btn');
+        const container = document.getElementById('archive-container');
+
+        // اگر کمتر از 5 تا معما بود، دکمه رو همون اول مخفی کن
+        if (document.querySelectorAll('.archive-item').length < 5) {
+            btn.style.display = 'none';
+        }
+
+        btn.addEventListener('click', function() {
+            // تغییر متن دکمه به "در حال بارگذاری..."
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '...';
+            btn.disabled = true;
+
+            fetch(`/api/archive/load-more/?offset=${offset}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.puzzles.forEach(puzzle => {
+                        // ساختن المنت HTML برای هر پازل جدید
+                        const link = document.createElement('a');
+                        link.href = `/play/${puzzle.url_date}/`;
+                        link.className = 'archive-item';
+                        link.style.cssText = `
+                            border: 2px solid #fff;
+                            border-radius: 10px;
+                            padding: 10px 15px;
+                            background: #16213e;
+                            font-size: 0.9rem;
+                            min-width: 60px;
+                            text-decoration: none;
+                            color: white;
+                            transition: transform 0.2s;
+                            animation: fadeIn 0.5s;
+                            margin: 0 5px; /* فاصله ریز برای وقتی با js اضافه میشه */
+                        `;
+                        link.innerHTML = `
+                            <div style="color: #aaa; font-size: 0.8rem;">${puzzle.day_name}</div>
+                            <div style="font-weight: bold; font-size: 1.1rem;">${puzzle.day_month}</div>
+                        `;
+                        container.appendChild(link);
+                    });
+
+                    offset += data.puzzles.length;
+
+                    // اگر دیگه دیتایی نیست دکمه رو حذف کن
+                    if (!data.has_more) {
+                        btn.style.display = 'none';
+                    } else {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+        });
+    });
+</script>

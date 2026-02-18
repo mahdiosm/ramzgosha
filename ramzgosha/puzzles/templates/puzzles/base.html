@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رمزگشایی کلمه</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        :root {
+            --bg-color: #1a1a2e; /* سرمه‌ای تیره */
+            --card-bg: #16213e; /* کمی روشن‌تر */
+            --accent: #e94560; /* صورتی/قرمز برای دکمه‌ها */
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --input-bg: #0f3460;
+        }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 500px;
+            margin-top: 50px;
+            text-align: center;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* استایل دکمه‌ها */
+        .btn {
+            background-color: #e0b0ff; /* بنفش روشن شبیه عکس */
+            color: #000;
+            border: 2px solid #000;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 3px 3px 0px #000;
+            transition: all 0.1s;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .btn:active {
+            box-shadow: 0px 0px 0px #000;
+            transform: translate(3px, 3px);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--text-muted);
+            box-shadow: none;
+        }
+
+        /* کارت معما */
+        .card {
+            background-color: #f0f8ff; /* آبی خیلی روشن شبیه عکس */
+            color: #000;
+            border: 3px solid #000;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 5px 5px 0px #000;
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="margin-bottom: 20px; font-weight: 900; font-size: 1.5rem;">
+            <span style="background: #000; color: #fff; padding: 2px 8px;">رمز</span>گشایی
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

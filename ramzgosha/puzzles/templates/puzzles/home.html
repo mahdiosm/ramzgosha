@@ -1,0 +1,28 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+    
+    {% if todays_puzzle %}
+        <div class="card">
+            <h2>سرنخ امروز</h2>
+            <p style="font-size: 1.2rem; margin: 30px 0;">
+                {{ todays_puzzle.clue_text }} ({{ todays_puzzle.answer_length }})
+            </p>
+            
+            <a href="{% url 'play' todays_puzzle.date|date:'Y-m-d' %}" class="btn">
+                شروع بازی
+            </a>
+
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #555;">
+                {{ todays_puzzle.date|date:"j F Y" }} · طراح: {{ todays_puzzle.author.username }}
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <h3>هنوز معمای امروز منتشر نشده!</h3>
+            <p>لطفا بعدا سر بزنید.</p>
+        </div>
+    {% endif %}
+
+    {% include 'puzzles/archive_list.html' %}
+{% endblock %}
