@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-+w6w+_n!nik$=&)umz0h=biokasyg!f$-+$2f@sweh-kk*y$t%
 DEBUG = True
 
 ALLOWED_HOSTS = ['mahdiosm2.pythonanywhere.com']
-
+# ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'puzzles'
+    'puzzles',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -113,7 +114,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 USE_I18N = True
 
 USE_TZ = True
-
+IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
