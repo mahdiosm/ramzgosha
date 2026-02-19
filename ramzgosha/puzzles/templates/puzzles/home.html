@@ -2,10 +2,38 @@
 
 {% block content %}
     {% if request.user.is_authenticated %}
-    <a href="{% url 'create_puzzle' %}" style="display:block; text-align:center; color:#e0b0ff; margin-bottom: 10px;">
-        + ساخت معمای جدید
-    </a>
+        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 30px;">
+            <a href="{% url 'my_puzzles' %}" style="
+                background: transparent; border: 2px solid #4fc3f7; color: #4fc3f7;
+                padding: 6px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.85rem;">
+                📝 معماهای من
+            </a>
+
+            <a href="{% url 'create_puzzle' %}" style="
+                background: transparent; border: 2px solid #e94560; color: #e94560;
+                padding: 6px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.85rem;">
+                + معمای جدید
+            </a>
+
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="
+                    background: transparent; border: 2px solid #555; color: #aaa;
+                    padding: 6px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; font-family: inherit;">
+                    خروج
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{% url 'login' %}" style="
+                background: transparent; border: 2px solid #e0b0ff; color: #e0b0ff;
+                padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
+                👤 ورود برای طراحان
+            </a>
+        </div>
     {% endif %}
+
     {% if todays_puzzle %}
         <div class="card">
             <h2>سرنخ امروز</h2>
@@ -13,12 +41,12 @@
                 {{ todays_puzzle.clue_text }} ({{ todays_puzzle.answer_length }})
             </p>
             
-            <a href="{% url 'play' todays_puzzle.date|date:'Y-m-d' %}" class="btn">
+            <a href="{% url 'play' todays_puzzle.publish_date|date:'Y-m-d' %}" class="btn">
                 شروع بازی
             </a>
 
             <div style="margin-top: 20px; font-size: 0.8rem; color: #555;">
-                {{ todays_puzzle.date|date:"j F Y" }} · طراح: {{ todays_puzzle.author.username }}
+                {{ todays_puzzle.publish_date|date:"j F Y" }} · طراح: {{ todays_puzzle.author.username }}
             </div>
         </div>
     {% else %}

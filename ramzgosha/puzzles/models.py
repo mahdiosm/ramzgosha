@@ -2,11 +2,17 @@
 import re
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 from django.utils.html import mark_safe
 
 
+
 class Puzzle(models.Model):
-    date = models.DateField(unique=True, verbose_name="تاریخ انتشار")
+    date = models.DateField(default=timezone.now, verbose_name="تاریخ ایجاد")
+
+    publish_date = models.DateField(null=True, blank=True, verbose_name="تاریخ انتشار رسمی")
+    is_verified = models.BooleanField(default=False, verbose_name="تایید شده", null=True)
+
     tagged_clue = models.TextField(verbose_name="متن معما با تگ",
                                    help_text="مثال: این {def}تعریف{/def} و این {fod}مصالح{/fod} است.", null=True)
 
@@ -15,9 +21,9 @@ class Puzzle(models.Model):
     answer = models.CharField(max_length=50, verbose_name="پاسخ")
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="طراح")
 
-    desc_definition = models.TextField(blank=True, verbose_name="توضیح تعریف", null=True)
-    desc_fodder = models.TextField(blank=True, verbose_name="توضیح مصالح (Fodder)", null=True)
-    desc_indicators = models.TextField(blank=True, verbose_name="توضیح نشانگرها", null=True)
+    desc_definition = models.TextField(blank=True, verbose_name="توضیح تعریف", null=True, default="توضیح تعریف")
+    desc_fodder = models.TextField(blank=True, verbose_name="توضیح مصالح (Fodder)", null=True, default=" توضیح مصالح")
+    desc_indicators = models.TextField(blank=True, verbose_name="توضیح نشانگرها", null=True, default="توضیح نشانگرها")
 
     def save(self, *args, **kwargs):
         if self.tagged_clue:

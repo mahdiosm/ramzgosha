@@ -90,7 +90,7 @@
                     <div class="cal-day empty-cell"></div>
                 {% else %}
                     {% if day.puzzle %}
-                        <a href="{% url 'play' day.puzzle.date|date:'Y-m-d' %}" class="cal-day has-puzzle {% if day.is_today %}today{% endif %}">
+                        <a href="{% url 'play' day.puzzle.publish_date|date:'Y-m-d' %}" class="cal-day has-puzzle {% if day.is_today %}today{% endif %}">
                             {{ day.date.day }}
                         </a>
                     {% else %}

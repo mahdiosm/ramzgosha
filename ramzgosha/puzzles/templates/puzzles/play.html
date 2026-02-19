@@ -178,7 +178,7 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white;">&#8594;</a>
     <div style="text-align: center;">
-        {{ puzzle.date|date:"j F Y" }} <br>
+        {{ puzzle.publish_date|date:"j F Y" }} <br>
         <small style="color: #a0a0a0;">طراح: {{ puzzle.author.username }}</small>
     </div>
     <div style="cursor: pointer;">ℹ️</div>
@@ -224,13 +224,15 @@
         {% endfor %}
     {% endif %}
 
-    {% if is_correct %}
-        <div style="animation: fadeIn 1s ease-out; margin-top: 30px;">
-            <div style="text-align: center; margin-bottom: 15px; color: #e0b0ff; font-weight: bold;">
-                🎉 عالی بود! می‌تونی معماهای دیگه رو هم حل کنی:
+    {% if not is_private %}
+        {% if is_correct %}
+            <div style="animation: fadeIn 1s ease-out; margin-top: 30px;">
+                <div style="text-align: center; margin-bottom: 15px; color: #e0b0ff; font-weight: bold;">
+                    🎉 عالی بود! می‌تونی معماهای دیگه رو هم حل کنی:
+                </div>
+                {% include 'puzzles/archive_list.html' %}
             </div>
-            {% include 'puzzles/archive_list.html' %}
-        </div>
+        {% endif %}
     {% endif %}
 </div>
 
@@ -406,7 +408,7 @@
                 }
             });
 
-            fetch("{% url 'reveal_letter' puzzle.date|date:'Y-m-d' %}", {
+            fetch("{% url 'reveal_letter' puzzle.publish_date|date:'Y-m-d' %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',

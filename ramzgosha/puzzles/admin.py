@@ -6,4 +6,6 @@ from .models import Puzzle
 
 @admin.register(Puzzle)
 class PuzzleAdmin(ImportExportModelAdmin):
-    list_display = ('date', 'clue_text', 'answer', 'author')
+    list_display = ('answer', 'author', 'is_verified', 'publish_date', 'date')
+    list_filter = ('is_verified', 'author')
+    list_editable = ('is_verified', 'publish_date')

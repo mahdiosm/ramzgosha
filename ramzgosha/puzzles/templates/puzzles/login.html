@@ -1,0 +1,80 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+<style>
+    .login-card {
+        background: #16213e;
+        border: 2px solid #fff;
+        border-radius: 12px;
+        padding: 30px;
+        width: 90%;
+        max-width: 350px;
+        margin: 40px auto;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        text-align: right;
+    }
+    .form-input {
+        width: 100%;
+        background: #0f3460;
+        border: 1px solid #555;
+        color: #fff;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        direction: ltr; /* چپ‌چین برای نام کاربری و رمز */
+    }
+    .form-input:focus {
+        border-color: #e0b0ff;
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #e0b0ff;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .error-msg {
+        background: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+        border: 1px solid #f44336;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div style="display: flex; justify-content: flex-start; margin-bottom: 10px; width: 100%; max-width: 350px; margin: 0 auto;">
+    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
+</div>
+
+<div class="login-card">
+    <h2 style="text-align: center; margin-top: 0; margin-bottom: 30px; color: white;">ورود به حساب</h2>
+
+    {% if form.errors %}
+        <div class="error-msg">نام کاربری یا رمز عبور اشتباه است.</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label class="form-label" for="id_username">نام کاربری</label>
+        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-input">
+
+        <label class="form-label" for="id_password">رمز عبور</label>
+        <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-input">
+
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <button type="submit" class="btn" style="width: 100%; margin-top: 10px; display: flex; justify-content: center; align-items: center; height: 46px;">
+            ورود
+        </button>
+    </form>
+</div>
+{% endblock %}

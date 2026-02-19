@@ -25,8 +25,8 @@ SECRET_KEY = 'django-insecure-+w6w+_n!nik$=&)umz0h=biokasyg!f$-+$2f@sweh-kk*y$t%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mahdiosm2.pythonanywhere.com']
-# ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['mahdiosm2.pythonanywhere.com']
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -120,3 +120,7 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'

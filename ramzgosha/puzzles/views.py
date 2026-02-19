@@ -19,32 +19,37 @@ def home(request):
 
     # گرفتن معمای امروز
     try:
-        todays_puzzle = Puzzle.objects.get(date=today)
+        todays_puzzle = Puzzle.objects.get(publish_date=today, is_verified=True)
     except Puzzle.DoesNotExist:
         todays_puzzle = None
 
-    # گرفتن 5 روز گذشته برای آرشیو پایین صفحه
-    past_puzzles = Puzzle.objects.filter(date__lt=today).order_by('-date')[:5]
+    # گرفتن 5 روز گذشته برای آرشیو پایین صفحه (اصلاح شده روی publish_date)
+    past_puzzles = Puzzle.objects.filter(publish_date__lt=today, is_verified=True).order_by('-publish_date')[:5]
+
+    # --- این خط اضافه شد ---
+    # پیدا کردن معمای قبلی (جدیدترین معمای منتشر شده قبل از امروز)
+    prev_puzzle = Puzzle.objects.filter(publish_date__lt=today, is_verified=True).order_by('-publish_date').first()
 
     context = {
         'todays_puzzle': todays_puzzle,
         'past_puzzles': past_puzzles,
+        'prev_puzzle': prev_puzzle, # اینو فرستادیم تا دکمه‌اش روشن بشه!
     }
     return render(request, 'puzzles/home.html', context)
 
 
 def play_puzzle(request, date_str):
-    puzzle = get_object_or_404(Puzzle, date=date_str)
+    puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True)
     today = timezone.localdate()
 
     past_puzzles = Puzzle.objects.filter(date__lt=today).order_by('-date')[:5]
 
     # --- کدهای جدید برای پیدا کردن معمای قبلی و بعدی ---
     # قبلی یعنی معمایی که تاریخش کوچیکتر از امروز باشه (اولین مورد بعد از مرتب‌سازی نزولی)
-    prev_puzzle = Puzzle.objects.filter(date__lt=puzzle.date).order_by('-date').first()
-    # بعدی یعنی معمایی که تاریخش بزرگتر از امروز باشه (اولین مورد بعد از مرتب‌سازی صعودی)
-    next_puzzle = Puzzle.objects.filter(date__gt=puzzle.date).order_by('date').first()
-
+    prev_puzzle = Puzzle.objects.filter(publish_date__lt=puzzle.publish_date, is_verified=True).order_by(
+        '-publish_date').first()    # بعدی یعنی معمایی که تاریخش بزرگتر از امروز باشه (اولین مورد بعد از مرتب‌سازی صعودی)
+    next_puzzle = Puzzle.objects.filter(publish_date__gt=puzzle.publish_date, is_verified=True).order_by(
+        'publish_date').first()
     # (اختیاری) اگر نمی‌خوای معماهای فردا و پس‌فردا لو برن، این شرط رو بذار:
     if next_puzzle and next_puzzle.date > today:
         next_puzzle = None
@@ -142,9 +147,9 @@ def archive_calendar(request, year=None, month=None):
         next_month, next_year = month + 1, year
 
     # دریافت تمام معماهای این ماه از دیتابیس
-    puzzles = Puzzle.objects.filter(date__year=year, date__month=month)
+    puzzles = Puzzle.objects.filter(publish_date__year=year, publish_date__month=month, is_verified=True)
     # تبدیل به یک دیکشنری برای جستجوی سریع (کلید: روز، مقدار: آبجکت معما)
-    puzzle_dict = {p.date.day: p for p in puzzles}
+    puzzle_dict = {p.publish_date.day: p for p in puzzles}
 
     # تنظیم شنبه به عنوان اولین روز هفته (در تقویم میلادی پایتون دوشنبه 0 است، پس شنبه 5 می‌شود)
     cal = calendar.Calendar(firstweekday=5)
@@ -214,18 +219,59 @@ def create_puzzle(request):
             next_date = today
 
         # ذخیره در دیتابیس
+        # در بخش ذخیره دیتابیس در ویوی create_puzzle:
         Puzzle.objects.create(
-            date=next_date,
             author=request.user,
             tagged_clue=tagged_clue,
             answer=answer,
             desc_definition=desc_def,
             desc_fodder=desc_fod,
-            desc_indicators=desc_ind
+            desc_indicators=desc_ind,
+            is_verified=False,  # منتظر تایید ادمین
+            publish_date=None  # بدون تاریخ انتشار
         )
+        messages.success(request, "معما با موفقیت ساخته شد و پس از بررسی منتشر خواهد شد.")
 
         messages.success(request,
                          f"معما با موفقیت ساخته شد و برای تاریخ {next_date.strftime('%Y-%m-%d')} زمان‌بندی شد!")
         return redirect('home')
 
     return render(request, 'puzzles/create.html')
+
+
+from django.core.paginator import Paginator
+
+
+@login_required(login_url='/admin/login/')
+def my_puzzles(request):
+    # گرفتن تمام معماهای کاربر (تایید شده یا نشده)
+    puzzles_list = Puzzle.objects.filter(author=request.user).order_by('-id')
+    paginator = Paginator(puzzles_list, 20)  # هر صفحه 20 عدد
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'puzzles/my_puzzles.html', {'page_obj': page_obj})
+
+
+@login_required(login_url='/admin/login/')
+def play_private(request, puzzle_id):
+    # فقط خود کاربر میتونه معمای خودش رو با آیدی بازی کنه
+    puzzle = get_object_or_404(Puzzle, id=puzzle_id, author=request.user)
+
+    context = {
+        'puzzle': puzzle,
+        'is_correct': None,
+        'is_private': True,  # این پرچم رو می‌فرستیم تا آرشیو و فلش‌ها نشون داده نشن
+    }
+
+    if request.method == "POST":
+        user_guess = request.POST.get('guess', '').strip()
+        if user_guess.replace(" ", "") == puzzle.answer.replace(" ", ""):
+            context['is_correct'] = True
+            messages.success(request, "آفرین! پاسخت کاملاً درست بود.")
+        else:
+            context['is_correct'] = False
+            messages.error(request, "اشتباه بود، دوباره تلاش کن.")
+
+    return render(request, 'puzzles/play.html', context)
