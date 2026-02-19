@@ -1,103 +1,53 @@
-<div class="archive" style="margin-top: 40px; margin-bottom: 50px; border-top: 1px solid #333; padding-top: 20px; text-align: center;">    <h3 style="border-bottom: 2px solid #e94560; display: inline-block; padding-bottom: 5px; margin-bottom: 20px;">
-        رمزهای گذشته
-    </h3>
+<div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #555;">
 
-    <div id="archive-container" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        {% for p in past_puzzles %}
-            <a href="{% url 'play' p.date|date:'Y-m-d' %}" class="archive-item" style="
-                border: 2px solid #fff;
-                border-radius: 10px;
-                padding: 10px 15px;
-                background: #16213e;
-                font-size: 0.9rem;
-                min-width: 60px;
-                text-decoration: none;
-                color: white;
-                transition: transform 0.2s;">
-                <div style="color: #aaa; font-size: 0.8rem;">{{ p.date|date:"l" }}</div>
-                <div style="font-weight: bold; font-size: 1.1rem;">{{ p.date|date:"j F" }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;">
+
+        <div style="flex: 1; text-align: right;">
+            {% if prev_puzzle %}
+                <a href="{% url 'play' prev_puzzle.date|date:'Y-m-d' %}" class="nav-btn" style="color: #4fc3f7; background: rgba(79, 195, 247, 0.1);">
+                    &#8594; <span class="nav-text">معمای قبلی</span>
+                </a>
+            {% endif %}
+        </div>
+
+        <div style="flex: 1; text-align: center;">
+            <a href="{% url 'archive_calendar' %}" class="nav-btn" style="color: #e0b0ff; background: rgba(224, 176, 255, 0.1); border: 1px solid #e0b0ff;">
+                📅 <span class="nav-text">تقویم معماها</span>
             </a>
-        {% empty %}
-            <p>آرشیوی موجود نیست.</p>
-        {% endfor %}
-    </div>
+        </div>
 
-    <button id="load-more-btn" style="
-        margin-top: 20px;
-        background: transparent;
-        border: 2px solid #e0b0ff;
-        color: #e0b0ff;
-        padding: 8px 20px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 0.9rem;
-        transition: all 0.3s;
-    ">
-        نمایش بیشتر &#8595;
-    </button>
+        <div style="flex: 1; text-align: left;">
+            {% if next_puzzle %}
+                <a href="{% url 'play' next_puzzle.date|date:'Y-m-d' %}" class="nav-btn" style="color: #4fc3f7; background: rgba(79, 195, 247, 0.1);">
+                    <span class="nav-text">معمای بعدی</span> &#8592;
+                </a>
+            {% endif %}
+        </div>
+
+    </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let offset = 5; // چون 5 تا رو همون اول نشون دادیم
-        const btn = document.getElementById('load-more-btn');
-        const container = document.getElementById('archive-container');
+<style>
+    .nav-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.95rem;
+        transition: all 0.2s ease-in-out;
+        white-space: nowrap; /* جلوگیری از شکستن متن به خط بعد */
+    }
+    .nav-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.2);
+    }
 
-        // اگر کمتر از 5 تا معما بود، دکمه رو همون اول مخفی کن
-        if (document.querySelectorAll('.archive-item').length < 5) {
-            btn.style.display = 'none';
+    /* استایل برای گوشی‌های موبایل که صفحه کوچیکه */
+    @media (max-width: 500px) {
+        .nav-btn {
+            padding: 8px 10px;
+            font-size: 0.8rem;
         }
-
-        btn.addEventListener('click', function() {
-            // تغییر متن دکمه به "در حال بارگذاری..."
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '...';
-            btn.disabled = true;
-
-            fetch(`/api/archive/load-more/?offset=${offset}`)
-                .then(response => response.json())
-                .then(data => {
-                    data.puzzles.forEach(puzzle => {
-                        // ساختن المنت HTML برای هر پازل جدید
-                        const link = document.createElement('a');
-                        link.href = `/play/${puzzle.url_date}/`;
-                        link.className = 'archive-item';
-                        link.style.cssText = `
-                            border: 2px solid #fff;
-                            border-radius: 10px;
-                            padding: 10px 15px;
-                            background: #16213e;
-                            font-size: 0.9rem;
-                            min-width: 60px;
-                            text-decoration: none;
-                            color: white;
-                            transition: transform 0.2s;
-                            animation: fadeIn 0.5s;
-                            margin: 0 5px; /* فاصله ریز برای وقتی با js اضافه میشه */
-                        `;
-                        link.innerHTML = `
-                            <div style="color: #aaa; font-size: 0.8rem;">${puzzle.day_name}</div>
-                            <div style="font-weight: bold; font-size: 1.1rem;">${puzzle.day_month}</div>
-                        `;
-                        container.appendChild(link);
-                    });
-
-                    offset += data.puzzles.length;
-
-                    // اگر دیگه دیتایی نیست دکمه رو حذف کن
-                    if (!data.has_more) {
-                        btn.style.display = 'none';
-                    } else {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
-        });
-    });
-</script>
+    }
+</style>

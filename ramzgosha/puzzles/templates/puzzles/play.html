@@ -7,8 +7,18 @@
         direction: rtl; /* چیدمان راست به چپ */
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
         gap: 8px;
         margin: 30px 0;
+    }
+
+    @media (max-width: 400px) {
+        .char-input {
+            width: 32px;
+            height: 42px;
+            font-size: 1.2rem;
+            border-width: 2px;
+        }
     }
 
     .char-input {
@@ -423,4 +433,20 @@
         }
     });
 </script>
+
+{% if is_correct %}
+    <script>
+        // وقتی صفحه لود شد و برنده بودیم، جواب رو توی اینپوت‌ها می‌ذاریم
+        document.addEventListener('DOMContentLoaded', function() {
+            const correctAnswer = "{{ puzzle.answer }}".replace(/\s+/g, '');
+            const inputs = document.querySelectorAll('.char-input');
+
+            inputs.forEach((input, index) => {
+                if (correctAnswer[index]) {
+                    input.value = correctAnswer[index];
+                }
+            });
+        });
+    </script>
+    {% endif %}
 {% endblock %}

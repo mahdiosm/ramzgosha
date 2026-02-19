@@ -1,0 +1,111 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        text-align: center;
+        margin-top: 20px;
+        direction: rtl; /* برای اینکه شنبه بیفته سمت راست */
+    }
+    
+    .cal-header {
+        font-weight: bold;
+        color: #e0b0ff;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed #444;
+        font-size: 0.9rem;
+    }
+    
+    .cal-day {
+        aspect-ratio: 1; /* باعث میشه مربع کامل بشه */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05); /* کم‌رنگ برای روزهای بدون پازل */
+        color: #555;
+        text-decoration: none;
+        user-select: none;
+    }
+    
+    /* استایل روزهایی که معما دارن */
+    .cal-day.has-puzzle {
+        background: #16213e;
+        color: #fff;
+        border: 2px solid #fff;
+        font-weight: bold;
+        transition: transform 0.1s, box-shadow 0.1s;
+    }
+    
+    .cal-day.has-puzzle:hover {
+        background: #e0b0ff;
+        color: #000;
+        border-color: #000;
+    }
+    
+    .cal-day.has-puzzle:active {
+        transform: scale(0.95);
+    }
+    
+    /* استایل امروز */
+    .cal-day.today {
+        border-color: #e94560 !important;
+        color: #e94560;
+    }
+    .cal-day.today.has-puzzle {
+        box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+    }
+    
+    /* استایل روزهای ماه‌های دیگه که توی تقویم میفتن */
+    .cal-day.empty-cell {
+        background: transparent;
+        color: transparent;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <a href="{% url 'archive_calendar_date' prev_year prev_month %}" class="btn" style="margin:0; padding: 5px 20px; font-size: 1.5rem;">&#8594;</a>
+    
+    <div style="text-align: center;">
+        <h2 style="margin: 0; color: white;">{{ month_name }}</h2>
+        <small style="color: #a0a0a0; font-size: 1.1rem;">{{ year }}</small>
+    </div>
+    
+    <a href="{% url 'archive_calendar_date' next_year next_month %}" class="btn" style="margin:0; padding: 5px 20px; font-size: 1.5rem;">&#8592;</a>
+</div>
+
+<div style="background: #1a1a2e; padding: 20px; border-radius: 15px; border: 2px solid #fff; box-shadow: 5px 5px 0px #000;">
+    <div class="calendar-grid">
+        {% for header in week_headers %}
+            <div class="cal-header">{{ header }}</div>
+        {% endfor %}
+        
+        {% for week in calendar_data %}
+            {% for day in week %}
+                {% if not day.is_current_month %}
+                    <div class="cal-day empty-cell"></div>
+                {% else %}
+                    {% if day.puzzle %}
+                        <a href="{% url 'play' day.puzzle.date|date:'Y-m-d' %}" class="cal-day has-puzzle {% if day.is_today %}today{% endif %}">
+                            {{ day.date.day }}
+                        </a>
+                    {% else %}
+                        <div class="cal-day {% if day.is_today %}today{% endif %}" title="{% if day.is_future %}هنوز منتشر نشده{% else %}معمایی وجود ندارد{% endif %}">
+                            {{ day.date.day }}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 30px;">
+    <a href="{% url 'home' %}" style="color: #a0a0a0; text-decoration: none; border-bottom: 1px dashed #a0a0a0; padding-bottom: 2px;">بازگشت به صفحه اصلی</a>
+</div>
+
+{% endblock %}

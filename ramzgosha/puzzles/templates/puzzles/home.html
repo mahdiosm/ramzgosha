@@ -1,7 +1,11 @@
 {% extends 'puzzles/base.html' %}
 
 {% block content %}
-    
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'create_puzzle' %}" style="display:block; text-align:center; color:#e0b0ff; margin-bottom: 10px;">
+        + ساخت معمای جدید
+    </a>
+    {% endif %}
     {% if todays_puzzle %}
         <div class="card">
             <h2>سرنخ امروز</h2>

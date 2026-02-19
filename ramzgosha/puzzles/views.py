@@ -2,14 +2,17 @@ from django.shortcuts import render
 
 # Create your views here.
 # puzzles/views.py
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from django.contrib import messages
-from .models import Puzzle
-from django.http import JsonResponse
 import random
 from django.http import JsonResponse
 from django.utils import formats
+import calendar
+from django.utils import timezone
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Puzzle
+from django.db.models import Max
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
 
 def home(request):
     today = timezone.localdate()
@@ -29,25 +32,33 @@ def home(request):
     }
     return render(request, 'puzzles/home.html', context)
 
+
 def play_puzzle(request, date_str):
     puzzle = get_object_or_404(Puzzle, date=date_str)
-
-    # اضافه کردن این بخش برای گرفتن لیست آرشیو
     today = timezone.localdate()
+
     past_puzzles = Puzzle.objects.filter(date__lt=today).order_by('-date')[:5]
+
+    # --- کدهای جدید برای پیدا کردن معمای قبلی و بعدی ---
+    # قبلی یعنی معمایی که تاریخش کوچیکتر از امروز باشه (اولین مورد بعد از مرتب‌سازی نزولی)
+    prev_puzzle = Puzzle.objects.filter(date__lt=puzzle.date).order_by('-date').first()
+    # بعدی یعنی معمایی که تاریخش بزرگتر از امروز باشه (اولین مورد بعد از مرتب‌سازی صعودی)
+    next_puzzle = Puzzle.objects.filter(date__gt=puzzle.date).order_by('date').first()
+
+    # (اختیاری) اگر نمی‌خوای معماهای فردا و پس‌فردا لو برن، این شرط رو بذار:
+    if next_puzzle and next_puzzle.date > today:
+        next_puzzle = None
 
     context = {
         'puzzle': puzzle,
         'is_correct': None,
-        'past_puzzles': past_puzzles,  # این رو حتما به کانتکست اضافه کن
-        'user_guess': ''
+        'past_puzzles': past_puzzles,
+        'prev_puzzle': prev_puzzle,  # ارسال به فرانت
+        'next_puzzle': next_puzzle,  # ارسال به فرانت
     }
 
     if request.method == "POST":
         user_guess = request.POST.get('guess', '').strip()
-        context['user_guess'] = user_guess
-
-        # نرمال‌سازی ساده برای مقایسه
         if user_guess.replace(" ", "") == puzzle.answer.replace(" ", ""):
             context['is_correct'] = True
             messages.success(request, "آفرین! درست حدس زدی.")
@@ -56,7 +67,6 @@ def play_puzzle(request, date_str):
             messages.error(request, "اشتباه بود، دوباره تلاش کن.")
 
     return render(request, 'puzzles/play.html', context)
-
 
 def reveal_letter(request, date_str):
     if request.method == "POST":
@@ -110,3 +120,112 @@ def load_more_archive(request):
         'puzzles': data,
         'has_more': len(puzzles) == limit  # اگر کمتر از لیمیت بود یعنی به تهش رسیدیم
     })
+
+
+def archive_calendar(request, year=None, month=None):
+    today = timezone.localdate()
+
+    # اگر سال و ماه ارسال نشده بود، ماه فعلی رو در نظر بگیر
+    if not year or not month:
+        year = today.year
+        month = today.month
+
+    # محاسبه ماه قبل و بعد برای دکمه‌های تقویم
+    if month == 1:
+        prev_month, prev_year = 12, year - 1
+    else:
+        prev_month, prev_year = month - 1, year
+
+    if month == 12:
+        next_month, next_year = 1, year + 1
+    else:
+        next_month, next_year = month + 1, year
+
+    # دریافت تمام معماهای این ماه از دیتابیس
+    puzzles = Puzzle.objects.filter(date__year=year, date__month=month)
+    # تبدیل به یک دیکشنری برای جستجوی سریع (کلید: روز، مقدار: آبجکت معما)
+    puzzle_dict = {p.date.day: p for p in puzzles}
+
+    # تنظیم شنبه به عنوان اولین روز هفته (در تقویم میلادی پایتون دوشنبه 0 است، پس شنبه 5 می‌شود)
+    cal = calendar.Calendar(firstweekday=5)
+    month_days = cal.monthdatescalendar(year, month)
+
+    calendar_data = []
+    for week in month_days:
+        week_data = []
+        for day_date in week:
+            is_current_month = day_date.month == month
+            puzzle = puzzle_dict.get(day_date.day) if is_current_month else None
+
+            # معماهای روزهای آینده رو غیرفعال نشون میدیم
+            is_future = day_date > today
+            if is_future:
+                puzzle = None
+
+            week_data.append({
+                'date': day_date,
+                'is_current_month': is_current_month,
+                'puzzle': puzzle,
+                'is_today': day_date == today,
+                'is_future': is_future
+            })
+        calendar_data.append(week_data)
+
+    month_names = ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر",
+                   "دسامبر"]
+
+    context = {
+        'year': year,
+        'month': month,
+        'month_name': month_names[month - 1],
+        'calendar_data': calendar_data,
+        'prev_year': prev_year,
+        'prev_month': prev_month,
+        'next_year': next_year,
+        'next_month': next_month,
+        'today': today,
+        'week_headers': ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']  # شنبه تا جمعه
+    }
+    return render(request, 'puzzles/calendar.html', context)
+
+
+@login_required(login_url='/admin/login/')  # اگر لاگین نبود بره صفحه لاگین
+def create_puzzle(request):
+    if request.method == "POST":
+        tagged_clue = request.POST.get('tagged_clue', '').strip()
+        answer = request.POST.get('answer', '').strip()
+        desc_def = request.POST.get('desc_definition', '').strip()
+        desc_fod = request.POST.get('desc_fodder', '').strip()
+        desc_ind = request.POST.get('desc_indicators', '').strip()
+
+        if not tagged_clue or not answer:
+            messages.error(request, "متن معما و پاسخ الزامی است!")
+            return redirect('create_puzzle')
+
+        # پیدا کردن بزرگترین تاریخ موجود در دیتابیس
+        last_puzzle = Puzzle.objects.aggregate(Max('date'))['date__max']
+        today = timezone.localdate()
+
+        # اگر معمایی از قبل بود و تاریخش از امروز بزرگتر بود، برو روز بعدش
+        # وگرنه از همین امروز شروع کن
+        if last_puzzle and last_puzzle >= today:
+            next_date = last_puzzle + timedelta(days=1)
+        else:
+            next_date = today
+
+        # ذخیره در دیتابیس
+        Puzzle.objects.create(
+            date=next_date,
+            author=request.user,
+            tagged_clue=tagged_clue,
+            answer=answer,
+            desc_definition=desc_def,
+            desc_fodder=desc_fod,
+            desc_indicators=desc_ind
+        )
+
+        messages.success(request,
+                         f"معما با موفقیت ساخته شد و برای تاریخ {next_date.strftime('%Y-%m-%d')} زمان‌بندی شد!")
+        return redirect('home')
+
+    return render(request, 'puzzles/create.html')
