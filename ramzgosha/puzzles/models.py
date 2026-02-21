@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.utils.html import mark_safe
 
 
-
 class Puzzle(models.Model):
     date = models.DateField(default=timezone.now, verbose_name="تاریخ ایجاد")
 
@@ -25,6 +24,9 @@ class Puzzle(models.Model):
     desc_fodder = models.TextField(blank=True, verbose_name="توضیح مصالح (Fodder)", null=True, default=" توضیح مصالح")
     desc_indicators = models.TextField(blank=True, verbose_name="توضیح نشانگرها", null=True, default="توضیح نشانگرها")
 
+    solve_count = models.IntegerField(default=0, verbose_name="تعداد دفعات حل")
+    total_hints_used = models.IntegerField(default=0, verbose_name="مجموع راهنمایی‌های استفاده شده")
+
     def save(self, *args, **kwargs):
         if self.tagged_clue:
             clean_text = re.sub(r'\{(def|fod|ind)\}(.*?)\{/\1\}', r'\2', self.tagged_clue)
@@ -33,6 +35,14 @@ class Puzzle(models.Model):
             self.clue_text = clean_text
 
         super().save(*args, **kwargs)
+
+    @property
+    def average_hints(self):
+        # اگر کسی حل نکرده باشه میانگین صفره
+        if self.solve_count == 0:
+            return 0
+        # محاسبه میانگین و گرد کردن به نزدیک‌ترین عدد صحیح
+        return round(self.total_hints_used / self.solve_count)
 
     @property
     def html_render(self):

@@ -2,7 +2,42 @@
 
 {% block content %}
 <style>
-    /* --- استایل‌های بخش ورودی --- */
+    .stats-box {
+        background-color: #cde2fe; /* همون رنگ آبی روشنِ عکس */
+        color: #000;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px auto 40px auto;
+        max-width: 400px;
+        text-align: right;
+        font-family: 'Vazirmatn', sans-serif;
+    }
+    .stats-title {
+        font-size: 1.2rem;
+        font-weight: 900;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 1.05rem;
+    }
+    .stat-row:last-child {
+        margin-bottom: 0;
+    }
+    .stat-label {
+        color: #333; /* کمی خاکستری برای لیبل‌ها */
+    }
+    .stat-value {
+        font-weight: 900;
+        font-size: 1.1rem;
+    }
+
     .puzzle-container {
         direction: rtl; /* چیدمان راست به چپ */
         display: flex;
@@ -195,6 +230,11 @@
     {% csrf_token %}
     <input type="hidden" name="guess" id="full-guess">
 
+    <input type="hidden" name="hint_def_used" id="hint_def_used" value="{{ hint_def_used }}">
+    <input type="hidden" name="hint_fod_used" id="hint_fod_used" value="{{ hint_fod_used }}">
+    <input type="hidden" name="hint_ind_used" id="hint_ind_used" value="{{ hint_ind_used }}">
+    <input type="hidden" name="letters_revealed" id="letters_revealed" value="{{ letters_revealed }}">
+
     <div class="puzzle-container">
         {% for i in "x"|rjust:puzzle.answer_length %}
             <input type="text"
@@ -217,19 +257,37 @@
 <div style="margin-top: 20px;">
     {% if messages %}
         {% for message in messages %}
+            {% if not is_correct or message.tags != 'success' %}
             <div style="padding: 15px; border-radius: 10px; margin-bottom: 20px; animation: fadeIn 0.5s;
                 background: {% if message.tags == 'success' %}#4caf50{% else %}#f44336{% endif %}; color: white;">
                 {{ message }}
             </div>
+            {% endif %}
         {% endfor %}
+    {% endif %}
+
+    {% if is_correct %}
+        <div class="stats-box" style="animation: fadeIn 1s ease-out;">
+            <div class="stats-title">🏆 آفرین! پاسخت درست بود</div>
+
+            <div class="stat-row">
+                <span class="stat-label">تعداد حل تا الان</span>
+                <span class="stat-value">{{ puzzle.solve_count }} نفر</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">میانگین راهنمایی (جامعه)</span>
+                <span class="stat-value">{{ puzzle.average_hints }} راهنمایی</span>
+            </div>
+            <div class="stat-row" style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
+                <span class="stat-label" style="color: #000; font-weight: bold;">راهنمایی‌های شما</span>
+                <span class="stat-value">{{ user_hints_used }} راهنمایی</span>
+            </div>
+        </div>
     {% endif %}
 
     {% if not is_private %}
         {% if is_correct %}
             <div style="animation: fadeIn 1s ease-out; margin-top: 30px;">
-                <div style="text-align: center; margin-bottom: 15px; color: #e0b0ff; font-weight: bold;">
-                    🎉 عالی بود! می‌تونی معماهای دیگه رو هم حل کنی:
-                </div>
                 {% include 'puzzles/archive_list.html' %}
             </div>
         {% endif %}
@@ -375,6 +433,7 @@
         window.toggleHint = function(type, desc, color) {
             closeHintModal();
 
+            document.getElementById('hint_' + type + '_used').value = 'true';
             const targets = document.querySelectorAll('.hint-' + type);
             // چک میکنیم اگر الان فعاله، غیرفعالش کنیم یا نه؟
             // معمولا کاربر میخواد روشنش کنه. اگر همه روشنه و دوباره زد شاید بخواد خاموش کنه
@@ -424,6 +483,8 @@
                         targetInput.value = data.char;
                         targetInput.classList.add('revealed');
                         updateHiddenInput();
+                        let lrInput = document.getElementById('letters_revealed');
+                        lrInput.value = parseInt(lrInput.value || 0) + 1;
                         // بعد از نمایش، فوکوس رو ببر جای درست
                         focusFirstAvailable();
                     }

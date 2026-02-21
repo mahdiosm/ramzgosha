@@ -14,6 +14,7 @@ from django.db.models import Max
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 
+
 def home(request):
     today = timezone.localdate()
 
@@ -33,21 +34,22 @@ def home(request):
     context = {
         'todays_puzzle': todays_puzzle,
         'past_puzzles': past_puzzles,
-        'prev_puzzle': prev_puzzle, # اینو فرستادیم تا دکمه‌اش روشن بشه!
+        'prev_puzzle': prev_puzzle,  # اینو فرستادیم تا دکمه‌اش روشن بشه!
     }
     return render(request, 'puzzles/home.html', context)
+
+
+# در فایل views.py
 
 def play_puzzle(request, date_str):
     today = timezone.localdate()
     puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True, publish_date__lte=today)
+
     past_puzzles = Puzzle.objects.filter(publish_date__lt=today, is_verified=True).order_by('-publish_date')[:5]
     prev_puzzle = Puzzle.objects.filter(publish_date__lt=puzzle.publish_date, is_verified=True).order_by(
         '-publish_date').first()
-    next_puzzle = Puzzle.objects.filter(
-        publish_date__gt=puzzle.publish_date,
-        publish_date__lte=today,
-        is_verified=True
-    ).order_by('publish_date').first()
+    next_puzzle = Puzzle.objects.filter(publish_date__gt=puzzle.publish_date, publish_date__lte=today,
+                                        is_verified=True).order_by('publish_date').first()
 
     context = {
         'puzzle': puzzle,
@@ -55,13 +57,46 @@ def play_puzzle(request, date_str):
         'past_puzzles': past_puzzles,
         'prev_puzzle': prev_puzzle,
         'next_puzzle': next_puzzle,
+
+        'hint_def_used': 'false',
+        'hint_fod_used': 'false',
+        'hint_ind_used': 'false',
+        'letters_revealed': 0,
     }
 
     if request.method == "POST":
         user_guess = request.POST.get('guess', '').strip()
+        hint_def_used = request.POST.get('hint_def_used', 'false')
+        hint_fod_used = request.POST.get('hint_fod_used', 'false')
+        hint_ind_used = request.POST.get('hint_ind_used', 'false')
+        try:
+            letters_revealed = int(request.POST.get('letters_revealed', 0))
+        except ValueError:
+            letters_revealed = 0
+
+        context['hint_def_used'] = hint_def_used
+        context['hint_fod_used'] = hint_fod_used
+        context['hint_ind_used'] = hint_ind_used
+        context['letters_revealed'] = letters_revealed
+
         if user_guess.replace(" ", "") == puzzle.answer.replace(" ", ""):
             context['is_correct'] = True
-            messages.success(request, "آفرین! درست حدس زدی.")
+
+            # محاسبه راهنمایی‌های استفاده شده توسط این کاربر
+            current_hints_count = letters_revealed
+            if hint_def_used == 'true': current_hints_count += 1
+            if hint_fod_used == 'true': current_hints_count += 1
+            if hint_ind_used == 'true': current_hints_count += 1
+
+            # ارسال متغیر به تمپلیت برای نمایش در باکس آماری
+            context['user_hints_used'] = current_hints_count
+
+            puzzle.solve_count += 1
+            puzzle.total_hints_used += current_hints_count
+            puzzle.save()
+
+            # دیگه پیام طولانی رو پاک کردیم، چون تو باکس نشونش میدیم
+            messages.success(request, "آفرین!")
         else:
             context['is_correct'] = False
             messages.error(request, "اشتباه بود، دوباره تلاش کن.")
@@ -71,25 +106,22 @@ def play_puzzle(request, date_str):
 
 def reveal_letter(request, date_str):
     if request.method == "POST":
-        puzzle = get_object_or_404(Puzzle, date=date_str)
-        # گرفتن ایندکس‌هایی که کاربر درخواست کرده (اختیاری)
-        # اما اینجا ما ساده عمل می‌کنیم، کلاینت درخواست میده، ما یه ایندکس رندوم میدیم
+        # اصلاح مهم: اینجا باید publish_date رو چک کنیم!
+        puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True)
 
         answer_pure = puzzle.answer.replace(" ", "")
         indices = list(range(len(answer_pure)))
 
-        # اینجا یه منطق ساده: یه اندیس رندوم و حرفش رو برمی‌گردونیم
-        # فرانت‌اند باید مدیریت کنه که کدوم خونه‌ها خالی هستن و درخواست بده
-
         import json
         data = json.loads(request.body)
-        exclude_indices = data.get('exclude', [])  # ایندکس‌هایی که کاربر پر کرده یا باز شدن
+        exclude_indices = data.get('exclude', [])
 
         available_indices = [i for i in indices if i not in exclude_indices]
 
         if not available_indices:
             return JsonResponse({'status': 'full'})
 
+        import random
         chosen_index = random.choice(available_indices)
         char = answer_pure[chosen_index]
 
