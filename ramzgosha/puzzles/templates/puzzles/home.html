@@ -15,6 +15,14 @@
                 + معمای جدید
             </a>
 
+            {% if request.user.is_staff %}
+            <a href="{% url 'admin_review_puzzles' %}" style="
+                background: transparent; border: 2px solid #ffca28; color: #ffca28;
+                padding: 6px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.85rem;">
+                🛡️ بررسی معماها
+            </a>
+            {% endif %}
+
             <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
                 <button type="submit" style="

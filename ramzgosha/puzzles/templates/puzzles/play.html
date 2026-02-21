@@ -461,13 +461,19 @@
 
             const currentInputs = document.querySelectorAll('.char-input');
             const revealedIndices = [];
+
             currentInputs.forEach((inp, idx) => {
-                if (inp.classList.contains('revealed') || inp.value !== '') {
+                if (inp.classList.contains('revealed')) {
                     revealedIndices.push(idx);
                 }
             });
 
-            fetch("{% url 'reveal_letter' puzzle.publish_date|date:'Y-m-d' %}", {
+            if (revealedIndices.length === currentInputs.length) {
+                alert('تمام حروف این معما قبلاً نمایش داده شده‌اند!');
+                return;
+            }
+
+            fetch("{% url 'reveal_letter' puzzle.id %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
@@ -482,14 +488,30 @@
                     if (targetInput) {
                         targetInput.value = data.char;
                         targetInput.classList.add('revealed');
+
                         updateHiddenInput();
+
                         let lrInput = document.getElementById('letters_revealed');
                         lrInput.value = parseInt(lrInput.value || 0) + 1;
-                        // بعد از نمایش، فوکوس رو ببر جای درست
-                        focusFirstAvailable();
+
+                        // ---- لاجیک جدید: بررسی پایان بازی ----
+                        // چک می‌کنیم چند تا خونه تا الان لو رفته (با احتساب همین آخری)
+                        const totalRevealed = document.querySelectorAll('.char-input.revealed').length;
+
+                        if (totalRevealed === currentInputs.length) {
+                            // اگر همه خونه‌ها لو رفتن، فرم رو به صورت خودکار سابمیت کن!
+                            // یه تاخیر نیم ثانیه‌ای میدیم که کاربر ببینه حرف آخر چی شد، بعد بره صفحه بعد
+                            setTimeout(() => {
+                                document.getElementById('puzzleForm').submit();
+                            }, 500);
+                        } else {
+                            // اگر هنوز خونه خالی هست، فقط فوکوس رو جابه‌جا کن
+                            focusFirstAvailable();
+                        }
+                        // ----------------------------------------
                     }
                 } else if (data.status === 'full') {
-                    alert('همه خانه‌ها پر هستند یا باز شده‌اند!');
+                    alert('همه حروف قبلاً نمایش داده شده‌اند!');
                 }
             })
             .catch(err => console.error('Error revealing letter:', err));

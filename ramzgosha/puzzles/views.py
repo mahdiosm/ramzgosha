@@ -13,6 +13,8 @@ from .models import Puzzle
 from django.db.models import Max
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q, F
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def home(request):
@@ -104,10 +106,14 @@ def play_puzzle(request, date_str):
     return render(request, 'puzzles/play.html', context)
 
 
-def reveal_letter(request, date_str):
+def reveal_letter(request, puzzle_id):
     if request.method == "POST":
-        # اصلاح مهم: اینجا باید publish_date رو چک کنیم!
-        puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True)
+        puzzle = get_object_or_404(Puzzle, id=puzzle_id)
+
+        # امنیت: فقط اگر معما تایید شده باشه، یا طرف خودش طراحش باشه، یا ادمین باشه بتونه حرفی رو لو بده
+        if not puzzle.is_verified:
+            if not request.user.is_authenticated or (puzzle.author != request.user and not request.user.is_staff):
+                return JsonResponse({'status': 'error', 'message': 'Not authorized'})
 
         answer_pure = puzzle.answer.replace(" ", "")
         indices = list(range(len(answer_pure)))
@@ -131,7 +137,6 @@ def reveal_letter(request, date_str):
             'status': 'ok'
         })
     return JsonResponse({'status': 'error'})
-
 
 def load_more_archive(request):
     offset = int(request.GET.get('offset', 5))  # پیش‌فرض ۵ تا چون ۵ تا اول رو خود صفحه رندر کرده
@@ -222,7 +227,7 @@ def archive_calendar(request, year=None, month=None):
     return render(request, 'puzzles/calendar.html', context)
 
 
-@login_required(login_url='/admin/login/')  # اگر لاگین نبود بره صفحه لاگین
+@login_required(login_url='/login/')
 def create_puzzle(request):
     if request.method == "POST":
         tagged_clue = request.POST.get('tagged_clue', '').strip()
@@ -235,19 +240,6 @@ def create_puzzle(request):
             messages.error(request, "متن معما و پاسخ الزامی است!")
             return redirect('create_puzzle')
 
-        # پیدا کردن بزرگترین تاریخ موجود در دیتابیس
-        last_puzzle = Puzzle.objects.aggregate(Max('date'))['date__max']
-        today = timezone.localdate()
-
-        # اگر معمایی از قبل بود و تاریخش از امروز بزرگتر بود، برو روز بعدش
-        # وگرنه از همین امروز شروع کن
-        if last_puzzle and last_puzzle >= today:
-            next_date = last_puzzle + timedelta(days=1)
-        else:
-            next_date = today
-
-        # ذخیره در دیتابیس
-        # در بخش ذخیره دیتابیس در ویوی create_puzzle:
         Puzzle.objects.create(
             author=request.user,
             tagged_clue=tagged_clue,
@@ -256,21 +248,19 @@ def create_puzzle(request):
             desc_fodder=desc_fod,
             desc_indicators=desc_ind,
             is_verified=False,  # منتظر تایید ادمین
-            publish_date=None  # بدون تاریخ انتشار
+            publish_date=None   # بدون تاریخ انتشار
         )
-        messages.success(request, "معما با موفقیت ساخته شد و پس از بررسی منتشر خواهد شد.")
 
-        messages.success(request,
-                         f"معما با موفقیت ساخته شد و برای تاریخ {next_date.strftime('%Y-%m-%d')} زمان‌بندی شد!")
-        return redirect('home')
+        messages.success(request, "معمای شما با موفقیت ثبت شد و در انتظار تایید ادمین است. می‌توانید معمای دیگری طراحی کنید!")
+
+        return redirect('create_puzzle')
 
     return render(request, 'puzzles/create.html')
-
 
 from django.core.paginator import Paginator
 
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def my_puzzles(request):
     # گرفتن تمام معماهای کاربر (تایید شده یا نشده)
     puzzles_list = Puzzle.objects.filter(author=request.user).order_by('-id')
@@ -282,10 +272,12 @@ def my_puzzles(request):
     return render(request, 'puzzles/my_puzzles.html', {'page_obj': page_obj})
 
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def play_private(request, puzzle_id):
-    # فقط خود کاربر میتونه معمای خودش رو با آیدی بازی کنه
-    puzzle = get_object_or_404(Puzzle, id=puzzle_id, author=request.user)
+    if request.user.is_staff:
+        puzzle = get_object_or_404(Puzzle, id=puzzle_id)
+    else:
+        puzzle = get_object_or_404(Puzzle, id=puzzle_id, author=request.user)
 
     context = {
         'puzzle': puzzle,
@@ -303,3 +295,82 @@ def play_private(request, puzzle_id):
             messages.error(request, "اشتباه بود، دوباره تلاش کن.")
 
     return render(request, 'puzzles/play.html', context)
+
+
+def get_next_available_date():
+    """تابعی برای پیدا کردن اولین روزی که هیچ معمای تایید شده‌ای در آن ثبت نشده است"""
+    today = timezone.localdate()
+    # لیستی از تمام تاریخ‌های رزرو شده در آینده
+    future_dates = set(Puzzle.objects.filter(
+        publish_date__gt=today,
+        is_verified=True
+    ).values_list('publish_date', flat=True))
+
+    # از فردا شروع به چک کردن می‌کنیم
+    check_date = today + timedelta(days=1)
+    while check_date in future_dates:
+        check_date += timedelta(days=1)
+
+    return check_date
+
+
+@staff_member_required(login_url='login')
+def admin_review_puzzles(request):
+    today = timezone.localdate()
+
+    if request.method == 'POST':
+        puzzle_id = request.POST.get('puzzle_id')
+        action = request.POST.get('action', 'verify')  # اکشن دیفالت: تایید کردن
+        puzzle = get_object_or_404(Puzzle, id=puzzle_id)
+
+        if action == 'verify':
+            publish_date_str = request.POST.get('publish_date')
+            puzzle.is_verified = True
+            puzzle.publish_date = publish_date_str
+            puzzle.save()
+            messages.success(request, f"معمای «{puzzle.answer}» برای تاریخ {publish_date_str} زمان‌بندی شد.")
+        elif action == 'unverify':
+            # لغو تایید
+            puzzle.is_verified = False
+            puzzle.publish_date = None
+            puzzle.save()
+            messages.warning(request, f"تایید معمای «{puzzle.answer}» لغو شد و به لیست در انتظار بررسی بازگشت.")
+
+        # ریدایرکت به همون صفحه‌ای که توش بودیم (تا سورت و فیلترها حفظ بشن)
+        return redirect(request.get_full_path())
+
+    # چک کردن اینکه آیا ادمین دکمه "نمایش همه" رو زده یا نه
+    show_all = request.GET.get('show_all') == 'true'
+
+    if show_all:
+        puzzles = Puzzle.objects.all()
+    else:
+        # فقط در انتظار تاییدها و آینده‌ها
+        puzzles = Puzzle.objects.filter(
+            Q(is_verified=False) | Q(is_verified=True, publish_date__gt=today)
+        )
+
+    sort_by = request.GET.get('sort', '-date')
+    allowed_sorts = ['date', '-date', 'publish_date', '-publish_date', 'author__username', '-author__username',
+                     'is_verified', '-is_verified']
+
+    if sort_by in allowed_sorts:
+        if 'publish_date' in sort_by:
+            if sort_by.startswith('-'):
+                puzzles = puzzles.order_by(F('publish_date').desc(nulls_last=True))
+            else:
+                puzzles = puzzles.order_by(F('publish_date').asc(nulls_last=True))
+        else:
+            puzzles = puzzles.order_by(sort_by)
+    else:
+        puzzles = puzzles.order_by('-date')
+
+    next_date = get_next_available_date()
+
+    context = {
+        'puzzles': puzzles,
+        'next_available_date': next_date.strftime('%Y-%m-%d'),
+        'current_sort': sort_by,
+        'show_all': show_all  # فرستادن این متغیر به فرانت
+    }
+    return render(request, 'puzzles/admin_review.html', context)

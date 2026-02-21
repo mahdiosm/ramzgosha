@@ -1,0 +1,139 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+<style>
+    /* ... (همون استایل‌های قبلیت رو نگه دار) ... */
+    .admin-table { width: 100%; text-align: right; border-collapse: collapse; color: white; background: #16213e; border-radius: 12px; overflow: hidden; }
+    .admin-table th { background: rgba(0,0,0,0.3); padding: 15px 10px; border-bottom: 2px solid #555; }
+    .admin-table td { padding: 15px 10px; border-bottom: 1px solid #333; vertical-align: middle; }
+    .sort-link { color: #e0b0ff; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+    .sort-link:hover { color: #fff; }
+
+    .verify-box { display: none; background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #4fc3f7; }
+    .date-input { background: #0f3460; border: 1px solid #fff; color: #fff; padding: 5px; border-radius: 5px; font-family: inherit; }
+    .verify-btn { background: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: bold; }
+    .unverify-btn { background: #f44336; color: white; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
+    <h2 style="margin: 0; color: #ffca28;">🛡️ پنل بررسی معماها</h2>
+    <div></div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div style="padding: 15px; border-radius: 10px; margin-bottom: 20px;
+            background: {% if message.tags == 'success' %}#4caf50{% elif message.tags == 'warning' %}#ff9800{% else %}#f44336{% endif %}; color: white;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+    <div style="font-size: 0.9rem; color: #a0a0a0;">
+        📅 اولین تاریخ خالی برای انتشار: <strong>{{ next_available_date }}</strong>
+    </div>
+
+    <div>
+        {% if show_all %}
+            <a href="?show_all=false&sort={{ current_sort }}" class="btn" style="background: #e94560; margin: 0; height: auto; padding: 8px 15px; font-size: 0.9rem;">نمایش فقط در انتظار/آینده</a>
+        {% else %}
+            <a href="?show_all=true&sort={{ current_sort }}" class="btn" style="background: #4fc3f7; color: #000; margin: 0; height: auto; padding: 8px 15px; font-size: 0.9rem;">نمایش کل معماهای سایت</a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="border: 2px solid #fff; border-radius: 12px; overflow-x: auto;">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>
+                    <a href="?show_all={{ show_all|lower }}&sort={% if current_sort == 'date' %}-date{% else %}date{% endif %}" class="sort-link">
+                        تاریخ ساخت {% if current_sort == 'date' %}↑{% elif current_sort == '-date' %}↓{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?show_all={{ show_all|lower }}&sort={% if current_sort == 'author__username' %}-author__username{% else %}author__username{% endif %}" class="sort-link">
+                        طراح {% if current_sort == 'author__username' %}↑{% elif current_sort == '-author__username' %}↓{% endif %}
+                    </a>
+                </th>
+                <th>پاسخ (تست)</th>
+                <th>
+                    <a href="?show_all={{ show_all|lower }}&sort={% if current_sort == 'publish_date' %}-publish_date{% else %}publish_date{% endif %}" class="sort-link">
+                        تاریخ انتشار {% if current_sort == 'publish_date' %}↑{% elif current_sort == '-publish_date' %}↓{% endif %}
+                    </a>
+                </th>
+                <th>عملیات ادمین</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in puzzles %}
+            <tr>
+                <td style="font-size: 0.85rem; color: #aaa;">{{ p.date|date:"Y-m-d" }}</td>
+                <td style="font-weight: bold;">{{ p.author.username }}</td>
+                <td>
+                    <a href="{% url 'play_private' p.id %}" style="color: #4fc3f7; text-decoration: none;">
+                        {{ p.answer }}
+                    </a>
+                </td>
+                <td>
+                    {% if p.is_verified %}
+                        <span style="color: #4caf50;">{{ p.publish_date|date:"Y-m-d" }}</span>
+                    {% else %}
+                        <span style="color: #ff9800;">تایید نشده</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.is_verified %}
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <label style="cursor: pointer; color: #4fc3f7; font-size: 0.9rem;">
+                                <input type="checkbox" onchange="toggleVerifyBox(this, 'box_{{ p.id }}')"> تغییر تاریخ
+                            </label>
+
+                            <form method="POST" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="puzzle_id" value="{{ p.id }}">
+                                <input type="hidden" name="action" value="unverify">
+                                <button type="submit" class="unverify-btn">لغو تایید ✖</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <label style="cursor: pointer; color: #ffca28;">
+                            <input type="checkbox" onchange="toggleVerifyBox(this, 'box_{{ p.id }}')"> تایید شود؟
+                        </label>
+                    {% endif %}
+
+                    <div id="box_{{ p.id }}" class="verify-box">
+                        <form method="POST" style="display: flex; gap: 5px; align-items: center;">
+                            {% csrf_token %}
+                            <input type="hidden" name="puzzle_id" value="{{ p.id }}">
+                            <input type="hidden" name="action" value="verify">
+                            <input type="date" name="publish_date" class="date-input" required
+                                   value="{% if p.is_verified %}{{ p.publish_date|date:'Y-m-d' }}{% else %}{{ next_available_date }}{% endif %}">
+                            <button type="submit" class="verify-btn">ثبت</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 30px;">هیچ معمایی یافت نشد.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function toggleVerifyBox(checkbox, boxId) {
+        const box = document.getElementById(boxId);
+        if (checkbox.checked) {
+            box.style.display = 'block';
+            box.style.animation = 'fadeIn 0.3s';
+        } else {
+            box.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}
