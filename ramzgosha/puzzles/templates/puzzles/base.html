@@ -3,80 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رمزگشایی کلمه</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <title>رمزگشایی | معماهای کلماتی</title>
+    <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <style>
-        :root {
-            --bg-color: #1a1a2e; /* سرمه‌ای تیره */
-            --card-bg: #16213e; /* کمی روشن‌تر */
-            --accent: #e94560; /* صورتی/قرمز برای دکمه‌ها */
-            --text-main: #ffffff;
-            --text-muted: #a0a0a0;
-            --input-bg: #0f3460;
-        }
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: #1a1a2e; /* تم دارک */
+            color: #fff;
             margin: 0;
+            padding: 0;
+            /* فاصله دادن به محتوای اصلی تا نوار پایین چیزی رو نپوشونه */
+            padding-bottom: 140px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
+
         .container {
             width: 90%;
-            max-width: 500px;
-            margin-top: 50px;
-            text-align: center;
+            max-width: 600px;
+            margin-top: 30px;
         }
-        a { text-decoration: none; color: inherit; }
 
-        /* استایل دکمه‌ها */
-        .btn {
-            background-color: #e0b0ff; /* بنفش روشن شبیه عکس */
-            color: #000;
-            border: 2px solid #000;
-            padding: 10px 30px;
-            border-radius: 25px;
+        /* --- استایل هدر و لوگو --- */
+        .main-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(22, 33, 62, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 9000;
+            box-sizing: border-box;
+        }
+        .main-logo {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- استایل‌های لوگوی انیمیشنی رمزگشایی --- */
+        .logo-box {
+            background: #e94560;
+            color: white;
             font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 3px 3px 0px #000;
-            transition: all 0.1s;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        .btn:active {
-            box-shadow: 0px 0px 0px #000;
-            transform: translate(3px, 3px);
-        }
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 2px solid var(--text-muted);
-            box-shadow: none;
+            width: 24px;
+            height: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            font-size: 1rem;
+            /* ترانزیشن رو حذف کردیم چون انیمیشن خودش کار رو انجام میده */
         }
 
-        /* کارت معما */
-        .card {
-            background-color: #f0f8ff; /* آبی خیلی روشن شبیه عکس */
+        /* اختصاص انیمیشن به هر حرف (9 ثانیه کل چرخه طول میکشه) */
+        .main-logo .logo-box:nth-child(1) { animation: animateR 9s infinite ease-in-out; } /* حرف ر */
+        .main-logo .logo-box:nth-child(2) { animation: animateM 9s infinite ease-in-out; } /* حرف م */
+        .main-logo .logo-box:nth-child(3) { animation: animateZ 9s infinite ease-in-out; } /* حرف ز */
+
+        /* * زمان‌بندی:
+         * 0% تا 20%: رمز (قرمز)
+         * 33% تا 53%: مرز (زرد)
+         * 66% تا 86%: رزم (آبی)
+         */
+
+        @keyframes animateR {
+            0%, 20%   { transform: translateX(0); background: #e94560; color: white; }
+            33%, 53%  { transform: translateX(-26px); background: #ffca28; color: #000; } /* میره جای م */
+            66%, 86%  { transform: translateX(0); background: #e94560; color: white; } /* برمیگرده سر جاش */
+            100%      { transform: translateX(0); background: #e94560; color: white; }
+        }
+
+        @keyframes animateM {
+            0%, 20%   { transform: translateX(0); background: #e94560; color: white; }
+            33%, 53%  { transform: translateX(26px); background: #ffca28; color: #000; } /* میره جای ر */
+            66%, 86%  { transform: translateX(-26px); background: #4fc3f7; color: #000; } /* میره جای ز */
+            100%      { transform: translateX(0); background: #e94560; color: white; }
+        }
+
+        @keyframes animateZ {
+            0%, 20%   { transform: translateX(0); background: #e94560; color: white; }
+            33%, 53%  { transform: translateX(0); background: #e94560; color: white; } /* سر جاش میمونه */
+            66%, 86%  { transform: translateX(26px); background: #4fc3f7; color: #000; } /* میره جای م */
+            100%      { transform: translateX(0); background: #e94560; color: white; }
+        }
+
+        .help-btn {
+            cursor: pointer;
+            background: rgba(79, 195, 247, 0.15);
+            border: 1px solid #4fc3f7;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #4fc3f7;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+        .help-btn:hover { background: rgba(79, 195, 247, 0.3); }
+
+        /* --- استایل دکمه‌های عمومی --- */
+        .btn {
+            background-color: #e0b0ff;
             color: #000;
-            border: 3px solid #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.1s;
+            box-shadow: 3px 3px 0px #000;
+            border: 2px solid #000;
+        }
+        .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+
+        /* --- استایل نوار ناوبری پایین (Bottom Nav) --- */
+        .bottom-nav-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 30, 50, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 9999;
+            width: 90%;
+            max-width: 500px;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #a0a0a0;
+            font-size: 0.75rem;
+            font-weight: 500;
+            min-width: 60px;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+        .nav-icon {
+            font-size: 1.3rem;
+            padding: 4px 18px;
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-item.active { color: #fff; font-weight: 800; }
+        .nav-item.active .nav-icon {
+            background-color: #e0b0ff;
+            color: #1a1a2e;
+            transform: scale(1.1);
+        }
+        .nav-item:hover:not(.active) .nav-icon { background-color: rgba(255,255,255,0.1); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000; /* روی همه چیز حتی نوار پایین */
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-box {
+            background: #1a1a2e;
+            border: 2px solid #fff;
             border-radius: 15px;
-            padding: 30px;
-            box-shadow: 5px 5px 0px #000;
-            margin-bottom: 40px;
+            padding: 20px;
+            width: 90%; max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: right;
+            direction: rtl;
+        }
+        .logout-btn {
+            cursor: pointer;
+            background: rgba(244, 67, 54, 0.15); /* قرمز ملایم برای خروج */
+            border: 1px solid #f44336;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #f44336;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .logout-btn:hover { background: rgba(244, 67, 54, 0.3); }
+
+        @media (max-width: 400px) {
+            .hide-text-mobile {
+                display: none;
+            }
+            .help-btn, .logout-btn {
+                padding: 5px 10px; /* آیکون‌ها جمع‌وجورتر میشن */
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div style="margin-bottom: 20px; font-weight: 900; font-size: 1.5rem;">
-            <span style="background: #000; color: #fff; padding: 2px 8px;">رمز</span>گشایی
-        </div>
+    <header class="main-header">
+        <a href="{% url 'home' %}" class="main-logo">
+            <div style="display: flex; direction: rtl; gap: 2px;">
+                <span class="logo-box">ر</span>
+                <span class="logo-box">م</span>
+                <span class="logo-box">ز</span>
+            </div>
+            <span style="color: #fff; font-weight: 900; font-size: 1.2rem; margin-right: 5px;">گشایی</span>
+        </a>
 
+        <div style="display: flex; gap: 10px; align-items: center;">
+
+            <div class="help-btn" onclick="openHowToPlayModal()" title="چگونه بازی کنیم؟">
+                <span>❓</span> <span class="hide-text-mobile">راهنما</span>
+            </div>
+
+            {% if request.user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn" title="خروج از حساب">
+                    <span>🚪</span> <span class="hide-text-mobile">خروج</span>
+                </button>
+            </form>
+            {% endif %}
+
+        </div>
+    </header>
+
+    <div class="container">
         {% block content %}{% endblock %}
     </div>
+
+    <div class="modal-overlay" id="howToPlayModal">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; position: sticky; top: 0; background: #1a1a2e; z-index: 10;">
+                <h3 style="margin:0; color: #e0b0ff;">چگونه بازی کنیم؟</h3>
+                <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeHowToPlayModal()">&times;</span>
+            </div>
+
+            <div style="font-size: 0.95rem; line-height: 1.8; color: #e0e0e0;">
+                <p>این بازی بر اساس <strong>Cryptic Crosswords (جداول مرموز)</strong> طراحی شده است. هر معما یک پازل کلماتی دوگانه است!</p>
+
+                <h4 style="color: #4fc3f7; margin-bottom: 5px;">۱. تعریف (Definition)</h4>
+                <p style="margin-top: 0;">یک قسمت از جمله دقیقاً هم‌معنی کلمه پاسخ است.</p>
+
+                <h4 style="color: #ffb300; margin-bottom: 5px;">۲. مصالح (Fodder)</h4>
+                <p style="margin-top: 0;">بخش دیگری از جمله، حروف کلمه پاسخ را در خود پنهان کرده است.</p>
+
+                <h4 style="color: #f06292; margin-bottom: 5px;">۳. نشانگرها (Indicators)</h4>
+                <p style="margin-top: 0;">کلماتی که مثل دستورالعمل می‌گویند با «مصالح» چه کار کنید (مثلاً حروف را به هم بریز).</p>
+
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 20px 0; border-right: 3px solid #e94560;">
+                    <strong style="color: #fff;">مثال:</strong><br>
+                    <em>روی آن نوشت: با گربه هر کار میخواهی بکن.</em><br>
+                    - <strong>پاسخ:</strong> برگه<br>
+                    - <span style="color: #4fc3f7;">روی آن نوشت</span> (تعریف)<br>
+                    - <span style="color: #ffb300;">گربه</span> (مصالح: حروفی که باید استفاده کنیم)<br>
+                    - <span style="color: #f06292;">هر کار میخواهی بکن</span> (نشانگر: حروف را به هم بریز)
+                </div>
+
+                <p>اگر گیر افتادید، از دکمه <strong>راهنمایی 💡</strong> استفاده کنید.</p>
+            </div>
+
+            <div style="margin-top: 30px; border-top: 1px dashed #555; padding: 15px 0; text-align: center; font-size: 0.85rem; color: #a0a0a0;">
+                <p style="margin: 5px 0;">طراحی و توسعه با ❤️</p>
+                <p style="margin: 0;">Developed by <a href="https://github.com/mahdiosm" target="_blank" style="color: #4fc3f7; text-decoration: none; font-weight: bold;">mahdiosm</a></p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav-container">
+        {% url 'home' as url_home %}
+        <a href="{{ url_home }}" class="nav-item {% if request.path == url_home %}active{% endif %}">
+            <div class="nav-icon">🧩</div>
+            <span>امروز</span>
+        </a>
+
+        {% url 'archive_calendar' as url_calendar %}
+        <a href="{{ url_calendar }}" class="nav-item {% if '/archive/calendar' in request.path %}active{% endif %}">
+            <div class="nav-icon">📅</div>
+            <span>تقویم</span>
+        </a>
+
+        {% url 'create_puzzle' as url_create %}
+        <a href="{{ url_create }}" class="nav-item {% if request.path == url_create %}active{% endif %}">
+            <div class="nav-icon">➕</div>
+            <span>طراحی</span>
+        </a>
+
+        {% if request.user.is_authenticated %}
+            {% url 'my_puzzles' as url_my_puzzles %}
+            <a href="{{ url_my_puzzles }}" class="nav-item {% if request.path == url_my_puzzles %}active{% endif %}">
+                <div class="nav-icon">👤</div>
+                <span>پروفایل</span>
+            </a>
+        {% else %}
+            {% url 'login' as url_login %}
+            <a href="{{ url_login }}" class="nav-item {% if request.path == url_login %}active{% endif %}">
+                <div class="nav-icon">🚪</div>
+                <span>ورود</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.is_staff %}
+            {% url 'admin_review_puzzles' as url_admin %}
+            <a href="{{ url_admin }}" class="nav-item {% if request.path == url_admin %}active{% endif %}">
+                <div class="nav-icon">🛡️</div>
+                <span>مدیریت</span>
+            </a>
+        {% endif %}
+    </nav>
+
+    <script>
+        // اسکریپت‌های مربوط به مودال آموزش در کل سایت
+        window.openHowToPlayModal = function() {
+            document.getElementById('howToPlayModal').style.display = 'flex';
+        }
+        window.closeHowToPlayModal = function() {
+            document.getElementById('howToPlayModal').style.display = 'none';
+        }
+        document.getElementById('howToPlayModal').addEventListener('click', function(e) {
+            if (e.target === this) { closeHowToPlayModal(); }
+        });
+    </script>
 </body>
 </html>

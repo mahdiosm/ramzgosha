@@ -2,222 +2,60 @@
 
 {% block content %}
 <style>
-    .stats-box {
-        background-color: #cde2fe; /* همون رنگ آبی روشنِ عکس */
-        color: #000;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 20px auto 40px auto;
-        max-width: 400px;
-        text-align: right;
-        font-family: 'Vazirmatn', sans-serif;
-    }
-    .stats-title {
-        font-size: 1.2rem;
-        font-weight: 900;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        font-size: 1.05rem;
-    }
-    .stat-row:last-child {
-        margin-bottom: 0;
-    }
-    .stat-label {
-        color: #333; /* کمی خاکستری برای لیبل‌ها */
-    }
-    .stat-value {
-        font-weight: 900;
-        font-size: 1.1rem;
-    }
-
-    .puzzle-container {
-        direction: rtl; /* چیدمان راست به چپ */
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 30px 0;
-    }
-
-    @media (max-width: 400px) {
-        .char-input {
-            width: 32px;
-            height: 42px;
-            font-size: 1.2rem;
-            border-width: 2px;
-        }
-    }
+    .puzzle-container { direction: rtl; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 30px 0; }
+    @media (max-width: 400px) { .char-input { width: 32px; height: 42px; font-size: 1.2rem; border-width: 2px; } }
 
     .char-input {
-        width: 40px;
-        height: 50px;
-        font-size: 1.4rem;
-        text-align: center;
-        background-color: transparent;
-        border: 3px solid #fff;
-        border-radius: 8px;
-        color: #fff;
-        font-weight: bold;
-        font-family: 'Vazirmatn', sans-serif;
-        outline: none;
-        transition: all 0.2s;
-        caret-color: transparent; /* مخفی کردن نشانگر تایپ */
+        width: 40px; height: 50px; font-size: 1.4rem; text-align: center;
+        background-color: transparent; border: 3px solid #fff; border-radius: 8px;
+        color: #fff; font-weight: bold; font-family: 'Vazirmatn', sans-serif;
+        outline: none; transition: all 0.2s; caret-color: transparent;
     }
+    .char-input:focus { border-color: #e0b0ff; background-color: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
+    .char-input:disabled { border-color: #4caf50; color: #4caf50; opacity: 1; -webkit-text-fill-color: #4caf50; }
+    .char-input.revealed { background-color: #e94560 !important; color: #fff !important; border-color: #e94560 !important; pointer-events: none; }
 
-    .char-input:focus {
-        border-color: #e0b0ff;
-        background-color: rgba(255, 255, 255, 0.1);
-        transform: scale(1.1);
-    }
+    .hint-span { border-radius: 4px; padding: 2px 0px; transition: all 0.3s; cursor: default; border-bottom: 2px solid transparent; }
+    .hint-def.active { background-color: rgba(79, 195, 247, 0.25); color: #4fc3f7; border-bottom-color: #4fc3f7; }
+    .hint-fod.active { background-color: rgba(255, 179, 0, 0.25); color: #ffb300; border-bottom-color: #ffb300; }
+    .hint-ind.active { background-color: rgba(240, 98, 146, 0.25); color: #f06292; border-bottom-color: #f06292; }
 
-    /* استایل وقتی بازی تمام شده */
-    .char-input:disabled {
-        border-color: #4caf50;
-        color: #4caf50;
-        opacity: 1;
-        -webkit-text-fill-color: #4caf50;
-    }
-
-    /* استایل حرف لو رفته (Reveal) - غیرقابل تغییر */
-    .char-input.revealed {
-        background-color: #e94560 !important;
-        color: #fff !important;
-        border-color: #e94560 !important;
-        pointer-events: none; /* غیرقابل کلیک */
-    }
-
-    /* --- استایل‌های سیستم راهنمایی --- */
-    .hint-span {
-        border-radius: 4px;
-        padding: 2px 0px;
-        transition: all 0.3s;
-        cursor: default;
-        border-bottom: 2px solid transparent; /* برای جلوگیری از پرش موقع اکتیو شدن */
-    }
-
-    /* رنگ‌های هایلایت - اصلاح شده */
-    /* Definition: آبی روشن */
-    .hint-def.active {
-        background-color: rgba(79, 195, 247, 0.25);
-        color: #4fc3f7;
-        border-bottom-color: #4fc3f7;
-    }
-
-    /* Fodder: زرد کهربایی/نارنجی (برای دید بهتر) */
-    .hint-fod.active {
-        background-color: rgba(255, 179, 0, 0.25); /* پس زمینه زرد تیره‌تر */
-        color: #ffb300; /* متن زرد پررنگ */
-        border-bottom-color: #ffb300;
-    }
-
-    /* Indicator: صورتی */
-    .hint-ind.active {
-        background-color: rgba(240, 98, 146, 0.25);
-        color: #f06292;
-        border-bottom-color: #f06292;
-    }
-
-    /* کانتینر دکمه‌ها برای تراز بودن */
-    .buttons-container {
-        margin-top: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: center; /* تراز عمودی دقیق */
-        gap: 15px; /* فاصله بین دکمه‌ها */
-    }
-
-    /* دکمه راهنمایی */
+    .buttons-container { margin-top: 30px; display: flex; justify-content: center; align-items: center; gap: 15px; }
     .btn-hint {
-        background-color: #ffca28;
-        color: #000;
-        border: 2px solid #000;
-        box-shadow: 3px 3px 0px #000;
-        font-weight: bold;
-        padding: 10px 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 1rem;
-        height: 46px; /* ارتفاع فیکس برای هم‌اندازه بودن با دکمه بررسی */
-        display: flex;
-        align-items: center;
+        background-color: #ffca28; color: #000; border: 2px solid #000; box-shadow: 3px 3px 0px #000;
+        font-weight: bold; padding: 10px 20px; border-radius: 25px; cursor: pointer;
+        font-family: inherit; font-size: 1rem; height: 46px; display: flex; align-items: center;
     }
     .btn-hint:active { transform: translate(3px, 3px); box-shadow: none; }
+    .btn-submit { height: 46px; margin: 0; display: flex; align-items: center; }
 
-    /* اصلاح دکمه اصلی برای هماهنگی */
-    .btn {
-        margin-top: 0; /* حذف مارجین اضافی */
-        height: 46px;
-        display: flex;
-        align-items: center;
+    .hint-modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(3px);
     }
-
-    /* --- استایل مودال --- */
-    .modal-overlay {
-        display: none;
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8);
-        z-index: 1000;
-        justify-content: center; align-items: center;
-        backdrop-filter: blur(3px);
-    }
-    .modal-box {
-        background: #1a1a2e;
-        border: 2px solid #fff;
-        border-radius: 15px;
-        padding: 20px;
-        width: 90%; max-width: 400px;
-        text-align: right;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .hint-option {
-        padding: 15px;
-        border-bottom: 1px solid #333;
-        cursor: pointer;
-        font-size: 1.1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.2s;
-    }
+    .hint-modal-box { background: #1a1a2e; border: 2px solid #fff; border-radius: 15px; padding: 20px; width: 90%; max-width: 400px; text-align: right; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .hint-option { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
     .hint-option:hover { background: #232342; border-radius: 5px; }
     .hint-option:last-child { border-bottom: none; }
 
-    /* باکس توضیحات زیر معما */
-    #hint-description-box {
-        display: none;
-        margin-top: 15px;
-        padding: 15px;
-        background: rgba(255,255,255,0.05);
-        border-right: 4px solid;
-        border-radius: 5px;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        animation: fadeIn 0.5s;
-    }
+    #hint-description-box { display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-right: 4px solid; border-radius: 5px; font-size: 0.95rem; line-height: 1.6; animation: fadeIn 0.5s; }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .stats-box { background-color: #cde2fe; color: #000; border-radius: 12px; padding: 20px; margin: 20px auto 40px auto; max-width: 400px; text-align: right; }
+    .stats-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 25px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 1.05rem; }
+    .stat-row:last-child { margin-bottom: 0; }
+    .stat-label { color: #333; }
+    .stat-value { font-weight: 900; font-size: 1.1rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white;">&#8594;</a>
+    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
     <div style="text-align: center;">
         {{ puzzle.publish_date|date:"j F Y" }} <br>
         <small style="color: #a0a0a0;">طراح: {{ puzzle.author.username }}</small>
     </div>
-    <div style="cursor: pointer;">ℹ️</div>
-</div>
+    <div style="width: 24px;"></div> </div>
 
 <div style="background: #fff; color: #000; padding: 25px; border-radius: 12px; margin-bottom: 10px; font-size: 1.3rem; line-height: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     {{ puzzle.html_render }}
@@ -229,7 +67,6 @@
 <form method="POST" id="puzzleForm" autocomplete="off">
     {% csrf_token %}
     <input type="hidden" name="guess" id="full-guess">
-
     <input type="hidden" name="hint_def_used" id="hint_def_used" value="{{ hint_def_used }}">
     <input type="hidden" name="hint_fod_used" id="hint_fod_used" value="{{ hint_fod_used }}">
     <input type="hidden" name="hint_ind_used" id="hint_ind_used" value="{{ hint_ind_used }}">
@@ -237,19 +74,14 @@
 
     <div class="puzzle-container">
         {% for i in "x"|rjust:puzzle.answer_length %}
-            <input type="text"
-                   class="char-input"
-                   maxlength="1"
-                   inputmode="text"
-                   {% if is_correct %}disabled{% endif %}
-                   data-index="{{ forloop.counter0 }}">
+            <input type="text" class="char-input" maxlength="1" inputmode="text" {% if is_correct %}disabled{% endif %} data-index="{{ forloop.counter0 }}">
         {% endfor %}
     </div>
 
     <div class="buttons-container">
         {% if not is_correct %}
-            <button type="submit" class="btn" onclick="prepareSubmission()">بررسی</button>
-            <button type="button" class="btn-hint" onclick="openHintModal()">راهنمایی 💡</button>
+            <button type="submit" class="btn btn-submit" onclick="prepareSubmission()">بررسی</button>
+            <button type="button" class="btn-hint" onclick="openGameHintModal()">راهنمایی 💡</button>
         {% endif %}
     </div>
 </form>
@@ -258,8 +90,7 @@
     {% if messages %}
         {% for message in messages %}
             {% if not is_correct or message.tags != 'success' %}
-            <div style="padding: 15px; border-radius: 10px; margin-bottom: 20px; animation: fadeIn 0.5s;
-                background: {% if message.tags == 'success' %}#4caf50{% else %}#f44336{% endif %}; color: white;">
+            <div style="padding: 15px; border-radius: 10px; margin-bottom: 20px; animation: fadeIn 0.5s; background: {% if message.tags == 'success' %}#4caf50{% else %}#f44336{% endif %}; color: white;">
                 {{ message }}
             </div>
             {% endif %}
@@ -269,53 +100,36 @@
     {% if is_correct %}
         <div class="stats-box" style="animation: fadeIn 1s ease-out;">
             <div class="stats-title">🏆 آفرین! پاسخت درست بود</div>
-
-            <div class="stat-row">
-                <span class="stat-label">تعداد حل تا الان</span>
-                <span class="stat-value">{{ puzzle.solve_count }} نفر</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">میانگین راهنمایی (جامعه)</span>
-                <span class="stat-value">{{ puzzle.average_hints }} راهنمایی</span>
-            </div>
+            <div class="stat-row"><span class="stat-label">تعداد حل تا الان</span><span class="stat-value">{{ puzzle.solve_count }} نفر</span></div>
+            <div class="stat-row"><span class="stat-label">میانگین راهنمایی (جامعه)</span><span class="stat-value">{{ puzzle.average_hints }} راهنمایی</span></div>
             <div class="stat-row" style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                <span class="stat-label" style="color: #000; font-weight: bold;">راهنمایی‌های شما</span>
-                <span class="stat-value">{{ user_hints_used }} راهنمایی</span>
+                <span class="stat-label" style="color: #000; font-weight: bold;">راهنمایی‌های شما</span><span class="stat-value">{{ user_hints_used }} راهنمایی</span>
             </div>
         </div>
     {% endif %}
 
     {% if not is_private %}
-        {% if is_correct %}
-            <div style="animation: fadeIn 1s ease-out; margin-top: 30px;">
-                {% include 'puzzles/archive_list.html' %}
-            </div>
-        {% endif %}
+        {% include 'puzzles/archive_list.html' %}
     {% endif %}
 </div>
 
-<div class="modal-overlay" id="hintModal">
-    <div class="modal-box">
+<div class="hint-modal-overlay" id="gameHintModal">
+    <div class="hint-modal-box">
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px;">
             <h3 style="margin:0;">انتخاب راهنمایی</h3>
-            <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeHintModal()">&times;</span>
+            <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeGameHintModal()">&times;</span>
         </div>
-
         <div class="hint-option" onclick="toggleHint('ind', '{{ puzzle.desc_indicators|escapejs }}', '#f06292')">
-            <span style="border-bottom: 3px solid #f06292; color: #f06292; font-weight: bold;">نشانگرها (Indicators)</span>
-            <span>👁️</span>
+            <span style="border-bottom: 3px solid #f06292; color: #f06292; font-weight: bold;">نشانگرها (Indicators)</span><span>👁️</span>
         </div>
         <div class="hint-option" onclick="toggleHint('fod', '{{ puzzle.desc_fodder|escapejs }}', '#ffb300')">
-            <span style="border-bottom: 3px solid #ffb300; color: #ffb300; font-weight: bold;">مصالح (Fodder)</span>
-            <span>🧱</span>
+            <span style="border-bottom: 3px solid #ffb300; color: #ffb300; font-weight: bold;">مصالح (Fodder)</span><span>🧱</span>
         </div>
         <div class="hint-option" onclick="toggleHint('def', '{{ puzzle.desc_definition|escapejs }}', '#4fc3f7')">
-            <span style="border-bottom: 3px solid #4fc3f7; color: #4fc3f7; font-weight: bold;">تعریف (Definition)</span>
-            <span>📖</span>
+            <span style="border-bottom: 3px solid #4fc3f7; color: #4fc3f7; font-weight: bold;">تعریف (Definition)</span><span>📖</span>
         </div>
         <div class="hint-option" onclick="revealOneLetter()">
-            <span style="border-bottom: 3px solid #e94560; color: #e94560; font-weight: bold;">نمایش یک حرف</span>
-            <span>🅰️</span>
+            <span style="border-bottom: 3px solid #e94560; color: #e94560; font-weight: bold;">نمایش یک حرف</span><span>🅰️</span>
         </div>
     </div>
 </div>
@@ -325,160 +139,98 @@
         const inputs = document.querySelectorAll('.char-input');
         const hiddenInput = document.getElementById('full-guess');
 
-        // پیدا کردن اولین خانه خالی و غیر قفل برای فوکوس
         function focusFirstAvailable() {
             for(let i=0; i<inputs.length; i++) {
                 if(!inputs[i].disabled && !inputs[i].classList.contains('revealed')) {
-                    inputs[i].focus();
-                    break;
+                    inputs[i].focus(); break;
                 }
             }
         }
 
-        // اگر بازی تمام نشده، فوکوس کن
-        if(inputs.length > 0 && !inputs[0].disabled) {
-            focusFirstAvailable();
-        }
+        if(inputs.length > 0 && !inputs[0].disabled) { focusFirstAvailable(); }
 
         inputs.forEach((input, index) => {
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace') {
-                    // اگر این خانه خالیه، برو قبلی (که revealed نیست) و پاکش کن
                     if (input.value === '') {
                         let prevIndex = index - 1;
                         while(prevIndex >= 0) {
                             if (!inputs[prevIndex].classList.contains('revealed')) {
-                                inputs[prevIndex].focus();
-                                inputs[prevIndex].value = '';
-                                e.preventDefault();
-                                break;
+                                inputs[prevIndex].focus(); inputs[prevIndex].value = ''; e.preventDefault(); break;
                             }
                             prevIndex--;
                         }
-                    } else {
-                        // اگر پر بود فقط پاکش کن
-                        input.value = '';
-                    }
+                    } else { input.value = ''; }
                 }
                 else if (e.key === 'ArrowLeft') {
                     let nextIndex = index + 1;
                     while (nextIndex < inputs.length) {
-                         if (!inputs[nextIndex].classList.contains('revealed')) {
-                             inputs[nextIndex].focus();
-                             break;
-                         }
+                         if (!inputs[nextIndex].classList.contains('revealed')) { inputs[nextIndex].focus(); break; }
                          nextIndex++;
                     }
                 }
                 else if (e.key === 'ArrowRight') {
                     let prevIndex = index - 1;
                     while (prevIndex >= 0) {
-                        if (!inputs[prevIndex].classList.contains('revealed')) {
-                            inputs[prevIndex].focus();
-                            break;
-                        }
+                        if (!inputs[prevIndex].classList.contains('revealed')) { inputs[prevIndex].focus(); break; }
                         prevIndex--;
                     }
                 }
             });
 
             input.addEventListener('input', (e) => {
-                // اگر کاراکتر وارد شد
                 if (input.value.length === 1) {
-                    // برو به خانه بعدی که revealed نیست
                     let nextIndex = index + 1;
                     while(nextIndex < inputs.length) {
-                        if(!inputs[nextIndex].classList.contains('revealed')) {
-                            inputs[nextIndex].focus();
-                            break;
-                        }
+                        if(!inputs[nextIndex].classList.contains('revealed')) { inputs[nextIndex].focus(); break; }
                         nextIndex++;
                     }
                 }
                 updateHiddenInput();
             });
 
-            input.addEventListener('focus', function() {
-                this.select();
-            });
+            input.addEventListener('focus', function() { this.select(); });
         });
 
         function updateHiddenInput() {
-            let fullWord = '';
-            inputs.forEach(inp => {
-                fullWord += inp.value;
-            });
-            hiddenInput.value = fullWord;
+            let fullWord = ''; inputs.forEach(inp => { fullWord += inp.value; }); hiddenInput.value = fullWord;
         }
 
-        window.prepareSubmission = function() {
-            updateHiddenInput();
-        }
+        window.prepareSubmission = function() { updateHiddenInput(); }
 
-        window.openHintModal = function() {
-            document.getElementById('hintModal').style.display = 'flex';
-        }
+        window.openGameHintModal = function() { document.getElementById('gameHintModal').style.display = 'flex'; }
+        window.closeGameHintModal = function() { document.getElementById('gameHintModal').style.display = 'none'; }
 
-        window.closeHintModal = function() {
-            document.getElementById('hintModal').style.display = 'none';
-        }
-
-        document.getElementById('hintModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeHintModal();
-            }
+        document.getElementById('gameHintModal').addEventListener('click', function(e) {
+            if (e.target === this) { closeGameHintModal(); }
         });
 
-        // تابع جدید: تاگل کردن راهنمایی بدون پاک کردن بقیه
         window.toggleHint = function(type, desc, color) {
-            closeHintModal();
-
+            closeGameHintModal();
             document.getElementById('hint_' + type + '_used').value = 'true';
+
             const targets = document.querySelectorAll('.hint-' + type);
-            // چک میکنیم اگر الان فعاله، غیرفعالش کنیم یا نه؟
-            // معمولا کاربر میخواد روشنش کنه. اگر همه روشنه و دوباره زد شاید بخواد خاموش کنه
-            // فعلا فرض میکنیم فقط روشن میکنه (چون گفتی نمیخوای بقیه بپرن)
+            targets.forEach(el => { el.classList.toggle('active'); });
 
-            let isAnyActive = false;
-            targets.forEach(el => {
-                if(el.classList.contains('active')) isAnyActive = true;
-                el.classList.toggle('active');
-            });
-
-            // باکس توضیحات رو آپدیت کن به آخرین چیزی که کلیک شده
             const box = document.getElementById('hint-description-box');
-
-            // اگر بعد از کلیک کلاس active گرفت نشون بده
-            // اگر میخوای توضیحات پاک نشه، ساده‌ترین راه اینه که همیشه متن جدید رو نشون بدی
-            box.style.display = 'block';
-            box.style.borderColor = color;
-            box.style.color = '#fff';
+            box.style.display = 'block'; box.style.borderColor = color; box.style.color = '#fff';
             box.innerText = desc || "توضیحی ثبت نشده است.";
         }
 
         window.revealOneLetter = function() {
-            closeHintModal();
-
+            closeGameHintModal();
             const currentInputs = document.querySelectorAll('.char-input');
             const revealedIndices = [];
 
             currentInputs.forEach((inp, idx) => {
-                if (inp.classList.contains('revealed')) {
-                    revealedIndices.push(idx);
-                }
+                if (inp.classList.contains('revealed')) { revealedIndices.push(idx); }
             });
 
-            if (revealedIndices.length === currentInputs.length) {
-                alert('تمام حروف این معما قبلاً نمایش داده شده‌اند!');
-                return;
-            }
+            if (revealedIndices.length === currentInputs.length) { alert('تمام حروف قبلاً باز شده‌اند!'); return; }
 
             fetch("{% url 'reveal_letter' puzzle.id %}", {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
                 body: JSON.stringify({ exclude: revealedIndices })
             })
             .then(response => response.json())
@@ -486,33 +238,17 @@
                 if (data.status === 'ok') {
                     const targetInput = document.querySelector(`.char-input[data-index="${data.index}"]`);
                     if (targetInput) {
-                        targetInput.value = data.char;
-                        targetInput.classList.add('revealed');
-
+                        targetInput.value = data.char; targetInput.classList.add('revealed');
                         updateHiddenInput();
-
                         let lrInput = document.getElementById('letters_revealed');
                         lrInput.value = parseInt(lrInput.value || 0) + 1;
 
-                        // ---- لاجیک جدید: بررسی پایان بازی ----
-                        // چک می‌کنیم چند تا خونه تا الان لو رفته (با احتساب همین آخری)
                         const totalRevealed = document.querySelectorAll('.char-input.revealed').length;
-
                         if (totalRevealed === currentInputs.length) {
-                            // اگر همه خونه‌ها لو رفتن، فرم رو به صورت خودکار سابمیت کن!
-                            // یه تاخیر نیم ثانیه‌ای میدیم که کاربر ببینه حرف آخر چی شد، بعد بره صفحه بعد
-                            setTimeout(() => {
-                                document.getElementById('puzzleForm').submit();
-                            }, 500);
-                        } else {
-                            // اگر هنوز خونه خالی هست، فقط فوکوس رو جابه‌جا کن
-                            focusFirstAvailable();
-                        }
-                        // ----------------------------------------
+                            setTimeout(() => { document.getElementById('puzzleForm').submit(); }, 500);
+                        } else { focusFirstAvailable(); }
                     }
-                } else if (data.status === 'full') {
-                    alert('همه حروف قبلاً نمایش داده شده‌اند!');
-                }
+                } else if (data.status === 'full') { alert('همه حروف باز شده‌اند!'); }
             })
             .catch(err => console.error('Error revealing letter:', err));
         }
@@ -520,18 +256,14 @@
 </script>
 
 {% if is_correct %}
-    <script>
-        // وقتی صفحه لود شد و برنده بودیم، جواب رو توی اینپوت‌ها می‌ذاریم
-        document.addEventListener('DOMContentLoaded', function() {
-            const correctAnswer = "{{ puzzle.answer }}".replace(/\s+/g, '');
-            const inputs = document.querySelectorAll('.char-input');
-
-            inputs.forEach((input, index) => {
-                if (correctAnswer[index]) {
-                    input.value = correctAnswer[index];
-                }
-            });
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const correctAnswer = "{{ puzzle.answer }}".replace(/\s+/g, '');
+        const inputs = document.querySelectorAll('.char-input');
+        inputs.forEach((input, index) => {
+            if (correctAnswer[index]) { input.value = correctAnswer[index]; }
         });
-    </script>
-    {% endif %}
+    });
+</script>
+{% endif %}
 {% endblock %}
