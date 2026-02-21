@@ -18,4 +18,6 @@ urlpatterns = [
     path('my-puzzles/', views.my_puzzles, name='my_puzzles'),
     path('my-puzzles/<int:puzzle_id>/', views.play_private, name='play_private'),
     path('admin-review/', views.admin_review_puzzles, name='admin_review_puzzles'),
+    path('puzzle/edit/<int:pk>/', views.edit_puzzle, name='edit_puzzle'),
+    path('puzzle/delete/<int:pk>/', views.delete_puzzle, name='delete_puzzle'),
 ]

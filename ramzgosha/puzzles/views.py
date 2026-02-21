@@ -16,6 +16,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, F
 from django.contrib.admin.views.decorators import staff_member_required
 import jdatetime
+from django.db.models.functions import Coalesce
+from django.db.models import F
 
 
 def home(request):
@@ -282,9 +284,11 @@ from django.core.paginator import Paginator
 
 @login_required(login_url='/login/')
 def my_puzzles(request):
+    user_puzzles = Puzzle.objects.filter(author=request.user).annotate(
+        effective_date=Coalesce('publish_date', 'date')
+    ).order_by('-effective_date')
     # گرفتن تمام معماهای کاربر (تایید شده یا نشده)
-    puzzles_list = Puzzle.objects.filter(author=request.user).order_by('-id')
-    paginator = Paginator(puzzles_list, 20)  # هر صفحه 20 عدد
+    paginator = Paginator(user_puzzles, 20)  # هر صفحه 20 عدد
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -394,3 +398,53 @@ def admin_review_puzzles(request):
         'show_all': show_all  # فرستادن این متغیر به فرانت
     }
     return render(request, 'puzzles/admin_review.html', context)
+
+
+@login_required(login_url='login')
+def edit_puzzle(request, pk):
+    puzzle = get_object_or_404(Puzzle, pk=pk)
+
+    # بررسی دسترسی: فقط ادمین یا (صاحب معما به شرطی که تایید نشده باشه)
+    can_edit = request.user.is_staff or (puzzle.author == request.user and not puzzle.is_verified)
+
+    if not can_edit:
+        messages.error(request,
+                       "شما اجازه ویرایش این معما را ندارید. (معماهای تایید شده فقط توسط مدیریت قابل ویرایش هستند)")
+        return redirect('my_puzzles')
+
+    if request.method == "POST":
+        puzzle.tagged_clue = request.POST.get('tagged_clue', '').strip()
+        puzzle.answer = request.POST.get('answer', '').strip()
+        puzzle.desc_definition = request.POST.get('desc_definition', '').strip()
+        puzzle.desc_fodder = request.POST.get('desc_fodder', '').strip()
+        puzzle.desc_indicators = request.POST.get('desc_indicators', '').strip()
+
+        # اگر ادمین ادیت می‌کنه، ممکنه بخواد تاریخ انتشار رو هم همزمان عوض کنه
+        if request.user.is_staff:
+            new_date = request.POST.get('publish_date')
+            if new_date:
+                puzzle.publish_date = new_date
+
+        puzzle.save()
+        messages.success(request, "تغییرات با موفقیت ذخیره شد.")
+
+        # ریدایرکت هوشمند: ادمین برگرده به پنل مدیریت، کاربر برگرده به لیست خودش
+        return redirect('admin_review_puzzles' if request.user.is_staff else 'my_puzzles')
+
+    return render(request, 'puzzles/edit_puzzle.html', {'puzzle': puzzle})
+
+
+@login_required(login_url='login')
+def delete_puzzle(request, pk):
+    puzzle = get_object_or_404(Puzzle, pk=pk)
+
+    # منطق حذف: ادمین همه چی، کاربر فقط تایید نشده‌های خودش
+    can_delete = request.user.is_staff or (puzzle.author == request.user and not puzzle.is_verified)
+
+    if not can_delete:
+        messages.error(request, "شما اجازه حذف این معما را ندارید.")
+    else:
+        puzzle.delete()
+        messages.warning(request, "معما با موفقیت حذف شد.")
+
+    return redirect('admin_review_puzzles' if request.user.is_staff else 'my_puzzles')

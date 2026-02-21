@@ -1,0 +1,44 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <a href="javascript:history.back()" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
+    <h2 style="margin: 0;">ویرایش معما</h2>
+    <div></div>
+</div>
+
+<form method="POST" style="background: #16213e; padding: 25px; border-radius: 16px; border: 2px solid #fff;">
+    {% csrf_token %}
+
+    <label style="display: block; margin-bottom: 10px; color: #4fc3f7; font-weight: bold;">متن معما (تگ شده):</label>
+    <textarea name="tagged_clue" rows="3" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 10px; font-family: inherit; margin-bottom: 20px;" required>{{ puzzle.tagged_clue }}</textarea>
+
+    <label style="display: block; margin-bottom: 10px; color: #4fc3f7; font-weight: bold;">پاسخ نهایی:</label>
+    <input type="text" name="answer" value="{{ puzzle.answer }}" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 10px; font-family: inherit; margin-bottom: 20px;" required>
+
+    {% if request.user.is_staff %}
+    <label style="display: block; margin-bottom: 10px; color: #ffca28; font-weight: bold;">تاریخ انتشار (فقط ادمین):</label>
+    <input type="date" name="publish_date" value="{{ puzzle.publish_date|date:'Y-m-d' }}" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 10px; font-family: inherit; margin-bottom: 20px;">
+    {% endif %}
+
+    <div style="display: grid; gap: 15px; margin-top: 10px;">
+        <div>
+            <label style="color: #4fc3f7;">توضیح تعریف (Definition):</label>
+            <input type="text" name="desc_definition" value="{{ puzzle.desc_definition }}" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 8px; margin-top: 5px;">
+        </div>
+        <div>
+            <label style="color: #ffb300;">توضیح مصالح (Fodder):</label>
+            <input type="text" name="desc_fodder" value="{{ puzzle.desc_fodder }}" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 8px; margin-top: 5px;">
+        </div>
+        <div>
+            <label style="color: #f06292;">توضیح نشانگرها (Indicators):</label>
+            <input type="text" name="desc_indicators" value="{{ puzzle.desc_indicators }}" style="width: 100%; background: #0f3460; color: #fff; border: 1px solid #555; border-radius: 8px; padding: 8px; margin-top: 5px;">
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; display: flex; gap: 10px;">
+        <button type="submit" class="btn" style="flex: 1; background: #4caf50;">ذخیره تغییرات</button>
+        <a href="{% url 'delete_puzzle' puzzle.id %}" class="btn" style="flex: 1; background: #f44336; text-align: center;" onclick="return confirm('آیا از حذف این معما مطمئن هستید؟')">حذف کامل</a>
+    </div>
+</form>
+{% endblock %}

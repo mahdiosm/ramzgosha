@@ -115,6 +115,18 @@
                             <button type="submit" class="verify-btn">ثبت</button>
                         </form>
                     </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <a href="{% url 'edit_puzzle' p.id %}" style="color: #4fc3f7; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                            <span>📝</span> ویرایش
+                        </a>
+
+                        <a href="{% url 'delete_puzzle' p.id %}"
+                           style="color: #f44336; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;"
+                           onclick="return confirm('آیا از حذف کامل این معما اطمینان دارید؟ این عمل قابل بازگشت نیست.')">
+                            <span>🗑️</span> حذف
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% empty %}

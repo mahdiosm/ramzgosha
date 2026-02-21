@@ -146,9 +146,12 @@
                     ✏️ ایجاد: {{ p.date|to_jalali }}
                 {% endif %}
             </div>
-            <a href="{% url 'play_private' p.id %}" class="play-btn">
-                تست / بازی
-            </a>
+            <div style="display: flex; gap: 8px;">
+                {% if not p.is_verified %}
+                    <a href="{% url 'edit_puzzle' p.id %}" class="play-btn" style="border-color: #ffca28; color: #ffca28;">ویرایش / حذف ✏️</a>
+                {% endif %}
+                    <a href="{% url 'play_private' p.id %}" class="play-btn">تست / بازی</a>
+            </div>
         </div>
     </div>
     {% empty %}

@@ -257,42 +257,53 @@
     </div>
 
     <div class="modal-overlay" id="howToPlayModal">
-        <div class="modal-box">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; position: sticky; top: 0; background: #1a1a2e; z-index: 10;">
-                <h3 style="margin:0; color: #e0b0ff;">چگونه بازی کنیم؟</h3>
-                <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeHowToPlayModal()">&times;</span>
+    <div class="modal-box">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; position: sticky; top: 0; background: #1a1a2e; z-index: 10;">
+            <h3 style="margin:0; color: #4fc3f7;">چگونه بازی کنیم؟</h3>
+            <span style="cursor: pointer; font-size: 1.5rem;" onclick="closeHowToPlayModal()">&times;</span>
+        </div>
+
+        <div style="font-size: 0.95rem; line-height: 1.8; color: #e0e0e0;">
+            <p>این بازی بر اساس <strong>جداول مرموز (Cryptic Crosswords)</strong> است. هر معما یک پازل کلماتی دوگانه است!</p>
+
+            <h4 style="color: #4fc3f7; margin-bottom: 5px;">۱. تعریف (Definition)</h4>
+            <p style="margin-top: 0;">بخشی از جمله که دقیقاً هم‌معنی پاسخ است.</p>
+
+            <h4 style="color: #ffb300; margin-bottom: 5px;">۲. مصالح (Fodder)</h4>
+            <p style="margin-top: 0;">حروفی که باید برای ساختن پاسخ از آن‌ها استفاده کنید.</p>
+
+            <h4 style="color: #f06292; margin-bottom: 5px;">۳. نشانگرها (Indicators)</h4>
+            <p style="margin-top: 0;">دستورالعملی که می‌گوید با حروف چه کار کنید (مثلاً حروف را مخلوط کن یا فقط حرف اول را بردار).</p>
+
+            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin: 20px 0; border-right: 3px solid #e94560;">
+                <strong style="color: #fff;">مثال ۱:</strong><br>
+                <em>روی آن نوشت: با گربه هر کار میخواهی بکن.</em><br>
+                - <strong>پاسخ:</strong> برگه (۴ حرف)<br>
+                - <span style="color: #4fc3f7;">روی آن نوشت</span> (تعریف برگه)<br>
+                - <span style="color: #ffb300;">گربه</span> (مصالح اصلی)<br>
+                - <span style="color: #f06292;">هر کار میخواهی بکن</span> (نشانگر جابه‌جایی حروف)
             </div>
 
-            <div style="font-size: 0.95rem; line-height: 1.8; color: #e0e0e0;">
-                <p>این بازی بر اساس <strong>Cryptic Crosswords (جداول مرموز)</strong> طراحی شده است. هر معما یک پازل کلماتی دوگانه است!</p>
-
-                <h4 style="color: #4fc3f7; margin-bottom: 5px;">۱. تعریف (Definition)</h4>
-                <p style="margin-top: 0;">یک قسمت از جمله دقیقاً هم‌معنی کلمه پاسخ است.</p>
-
-                <h4 style="color: #ffb300; margin-bottom: 5px;">۲. مصالح (Fodder)</h4>
-                <p style="margin-top: 0;">بخش دیگری از جمله، حروف کلمه پاسخ را در خود پنهان کرده است.</p>
-
-                <h4 style="color: #f06292; margin-bottom: 5px;">۳. نشانگرها (Indicators)</h4>
-                <p style="margin-top: 0;">کلماتی که مثل دستورالعمل می‌گویند با «مصالح» چه کار کنید (مثلاً حروف را به هم بریز).</p>
-
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 20px 0; border-right: 3px solid #e94560;">
-                    <strong style="color: #fff;">مثال:</strong><br>
-                    <em>روی آن نوشت: با گربه هر کار میخواهی بکن.</em><br>
-                    - <strong>پاسخ:</strong> برگه<br>
-                    - <span style="color: #4fc3f7;">روی آن نوشت</span> (تعریف)<br>
-                    - <span style="color: #ffb300;">گربه</span> (مصالح: حروفی که باید استفاده کنیم)<br>
-                    - <span style="color: #f06292;">هر کار میخواهی بکن</span> (نشانگر: حروف را به هم بریز)
-                </div>
-
-                <p>اگر گیر افتادید، از دکمه <strong>راهنمایی 💡</strong> استفاده کنید.</p>
+            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin: 20px 0; border-right: 3px solid #4fc3f7;">
+                <strong style="color: #fff;">مثال ۲:</strong><br>
+                <em>قهوه‌ای، گاهی سفت، گاهی شل. در ابتدا شکر، سپس میوه‌ی نرسیده‌ی مخلوط، و در آخر ماست.</em><br>
+                - <strong>پاسخ:</strong> شکلات (۵ حرف)<br>
+                - <span style="color: #4fc3f7;">قهوه‌ای، گاهی سفت، گاهی شل</span> (تعریف شکلات)<br>
+                - <span style="color: #f06292;">در ابتدا</span> <span style="color: #ffb300;">شکر</span> (حرف اول شکر: <strong>ش</strong>)<br>
+                - <span style="color: #ffb300;">میوه‌ی نرسیده</span> (کال) + <span style="color: #f06292;">مخلوط</span> (جابه جایی حروف کال: <strong>کلا</strong>)<br>
+                - <span style="color: #f06292;">در آخر</span> <span style="color: #ffb300;">ماست</span> (حرف آخر ماست: <strong>ت</strong>)<br>
+                - ترکیب نهایی: <strong>ش + کلا + ت = شکلات</strong>
             </div>
 
-            <div style="margin-top: 30px; border-top: 1px dashed #555; padding: 15px 0; text-align: center; font-size: 0.85rem; color: #a0a0a0;">
-                <p style="margin: 5px 0;">طراحی و توسعه با ❤️</p>
-                <p style="margin: 0;">Developed by <a href="https://github.com/mahdiosm" target="_blank" style="color: #4fc3f7; text-decoration: none; font-weight: bold;">mahdiosm</a></p>
-            </div>
+            <p style="font-size: 0.85rem; text-align: center; color: #a0a0a0;">اگر گیر افتادید، از دکمه <strong>راهنمایی 💡</strong> در پایین صفحه استفاده کنید.</p>
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px dashed #555; padding: 15px 0; text-align: center; font-size: 0.85rem; color: #a0a0a0;">
+            <p style="margin: 5px 0;">طراحی و توسعه با ❤️</p>
+            <p style="margin: 0;">Developed by <a href="https://github.com/mahdiosm" target="_blank" style="color: #4fc3f7; text-decoration: none; font-weight: bold;">mahdiosm</a></p>
         </div>
     </div>
+</div>
 
     <nav class="bottom-nav-container">
         {% url 'home' as url_home %}
