@@ -1,4 +1,5 @@
 {% extends 'puzzles/base.html' %}
+{% load jalali_tags %}
 
 {% block content %}
 <style>
@@ -70,7 +71,7 @@
         <tbody>
             {% for p in puzzles %}
             <tr>
-                <td style="font-size: 0.85rem; color: #aaa;">{{ p.date|date:"Y-m-d" }}</td>
+                <td style="font-size: 0.85rem; color: #aaa;">{{ p.date|to_jalali }}</td>
                 <td style="font-weight: bold;">{{ p.author.username }}</td>
                 <td>
                     <a href="{% url 'play_private' p.id %}" style="color: #4fc3f7; text-decoration: none;">
@@ -79,7 +80,7 @@
                 </td>
                 <td>
                     {% if p.is_verified %}
-                        <span style="color: #4caf50;">{{ p.publish_date|date:"Y-m-d" }}</span>
+                        <span style="color: #4caf50;">{{ p.publish_date|to_jalali }}</span>
                     {% else %}
                         <span style="color: #ff9800;">تایید نشده</span>
                     {% endif %}

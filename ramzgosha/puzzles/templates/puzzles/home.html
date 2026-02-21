@@ -1,4 +1,5 @@
 {% extends 'puzzles/base.html' %}
+{% load jalali_tags %}
 
 {% block content %}
 
@@ -15,7 +16,7 @@
                 </a>
 
                 <div style="margin-top: 25px; font-size: 0.85rem; color: #a0a0a0;">
-                    {{ todays_puzzle.publish_date|date:"j F Y" }} · طراح: {{ todays_puzzle.author.username }}
+                    {{ todays_puzzle.publish_date|to_jalali }} · طراح: {{ todays_puzzle.author.username }}
                 </div>
             </div>
         {% else %}

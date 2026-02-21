@@ -348,5 +348,31 @@
             if (e.target === this) { closeHowToPlayModal(); }
         });
     </script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const englishNumbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+            const persianNumbers = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+
+            function convertToPersian(node) {
+                // اگر متن خام بود، اعدادش رو جایگزین کن
+                if (node.nodeType === 3) {
+                    let text = node.nodeValue;
+                    for (let i = 0; i < 10; i++) {
+                        text = text.split(englishNumbers[i]).join(persianNumbers[i]);
+                    }
+                    node.nodeValue = text;
+                }
+                // اگر تگ HTML بود، برو داخلش (ولی کاری به اینپوت‌ها و کدهای سیستم نداشته باش)
+                else if (node.nodeType === 1 && !['SCRIPT', 'STYLE', 'INPUT', 'TEXTAREA'].includes(node.tagName)) {
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        convertToPersian(node.childNodes[i]);
+                    }
+                }
+            }
+            // اجرای تابع برای کل صفحه
+            convertToPersian(document.body);
+        });
+    </script>
 </body>
 </html>

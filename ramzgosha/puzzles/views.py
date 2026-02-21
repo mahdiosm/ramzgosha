@@ -15,6 +15,7 @@ from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, F
 from django.contrib.admin.views.decorators import staff_member_required
+import jdatetime
 
 
 def home(request):
@@ -161,71 +162,90 @@ def load_more_archive(request):
 
 
 def archive_calendar(request, year=None, month=None):
-    today = timezone.localdate()
+    today_greg = timezone.localdate()
+    today_jalali = jdatetime.date.fromgregorian(date=today_greg)
 
-    # اگر سال و ماه ارسال نشده بود، ماه فعلی رو در نظر بگیر
     if not year or not month:
-        year = today.year
-        month = today.month
-
-    # محاسبه ماه قبل و بعد برای دکمه‌های تقویم
-    if month == 1:
-        prev_month, prev_year = 12, year - 1
+        j_year = today_jalali.year
+        j_month = today_jalali.month
     else:
-        prev_month, prev_year = month - 1, year
+        j_year = int(year)
+        j_month = int(month)
 
-    if month == 12:
-        next_month, next_year = 1, year + 1
+    # محاسبه ماه قبل و بعد شمسی
+    if j_month == 1:
+        prev_month, prev_year = 12, j_year - 1
     else:
-        next_month, next_year = month + 1, year
+        prev_month, prev_year = j_month - 1, j_year
 
-    # دریافت تمام معماهای این ماه از دیتابیس
-    puzzles = Puzzle.objects.filter(publish_date__year=year, publish_date__month=month, is_verified=True)
-    # تبدیل به یک دیکشنری برای جستجوی سریع (کلید: روز، مقدار: آبجکت معما)
-    puzzle_dict = {p.publish_date.day: p for p in puzzles}
+    if j_month == 12:
+        next_month, next_year = 1, j_year + 1
+    else:
+        next_month, next_year = j_month + 1, j_year
 
-    # تنظیم شنبه به عنوان اولین روز هفته (در تقویم میلادی پایتون دوشنبه 0 است، پس شنبه 5 می‌شود)
-    cal = calendar.Calendar(firstweekday=5)
-    month_days = cal.monthdatescalendar(year, month)
+    # محاسبه روزهای ماه شمسی
+    first_day = jdatetime.date(j_year, j_month, 1)
+    start_weekday = first_day.weekday()  # در این کتابخانه 0 یعنی شنبه
+
+    if j_month <= 6:
+        days_in_month = 31
+    elif j_month <= 11:
+        days_in_month = 30
+    else:
+        days_in_month = 29 if not first_day.isleap() else 30
+
+    # گرفتن معماها از دیتابیس (تبدیل بازه شمسی به میلادی برای کوئری)
+    start_greg = first_day.togregorian()
+    end_greg = jdatetime.date(j_year, j_month, days_in_month).togregorian()
+    puzzles = Puzzle.objects.filter(publish_date__gte=start_greg, publish_date__lte=end_greg, is_verified=True)
+
+    # ساخت دیکشنری برای دسترسی سریع
+    puzzle_dict = {jdatetime.date.fromgregorian(date=p.publish_date).day: p for p in puzzles}
 
     calendar_data = []
-    for week in month_days:
-        week_data = []
-        for day_date in week:
-            is_current_month = day_date.month == month
-            puzzle = puzzle_dict.get(day_date.day) if is_current_month else None
+    week = []
 
-            # معماهای روزهای آینده رو غیرفعال نشون میدیم
-            is_future = day_date > today
-            if is_future:
-                puzzle = None
+    # پر کردن روزهای خالی اول ماه
+    for _ in range(start_weekday):
+        week.append({'is_current_month': False})
 
-            week_data.append({
-                'date': day_date,
-                'is_current_month': is_current_month,
-                'puzzle': puzzle,
-                'is_today': day_date == today,
-                'is_future': is_future
-            })
-        calendar_data.append(week_data)
+    for day in range(1, days_in_month + 1):
+        current_jdate = jdatetime.date(j_year, j_month, day)
+        is_future = current_jdate > today_jalali
 
-    month_names = ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر",
-                   "دسامبر"]
+        week.append({
+            'is_current_month': True,
+            'day_num': day,
+            'greg_date_str': current_jdate.togregorian().strftime('%Y-%m-%d'),  # برای ساخت لینکِ بازی
+            'puzzle': puzzle_dict.get(day) if not is_future else None,
+            'is_today': current_jdate == today_jalali,
+            'is_future': is_future
+        })
+
+        if len(week) == 7:
+            calendar_data.append(week)
+            week = []
+
+    if week:
+        while len(week) < 7:
+            week.append({'is_current_month': False})
+        calendar_data.append(week)
+
+    month_names = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن',
+                   'اسفند']
 
     context = {
-        'year': year,
-        'month': month,
-        'month_name': month_names[month - 1],
+        'year': j_year,
+        'month': j_month,
+        'month_name': month_names[j_month - 1],
         'calendar_data': calendar_data,
         'prev_year': prev_year,
         'prev_month': prev_month,
         'next_year': next_year,
         'next_month': next_month,
-        'today': today,
-        'week_headers': ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']  # شنبه تا جمعه
+        'week_headers': ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
     }
     return render(request, 'puzzles/calendar.html', context)
-
 
 @login_required(login_url='/login/')
 def create_puzzle(request):

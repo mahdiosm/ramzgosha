@@ -1,59 +1,181 @@
 {% extends 'puzzles/base.html' %}
+{% load jalali_tags %} {% block content %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
 
-{% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white;">&#8594;</a>
-    <h2 style="margin: 0;">معماهای ساخته شده توسط من</h2>
-    <a href="{% url 'create_puzzle' %}" style="color: #e0b0ff; text-decoration: none; font-size: 1.5rem;">+</a>
+    /* استایل‌های لیست کارت‌ها (جایگزین جدول) */
+    .puzzle-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .puzzle-card {
+        background: #16213e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .puzzle-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        border-color: rgba(79, 195, 247, 0.3);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .clue-text {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #fff;
+        line-height: 1.6;
+        margin: 0;
+        flex: 1;
+    }
+
+    /* استایل نشان‌های وضعیت (Badges) */
+    .badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .badge-verified {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4caf50;
+        border: 1px solid #4caf50;
+    }
+    .badge-pending {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+        border: 1px solid #ff9800;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px dashed #444;
+        padding-top: 15px;
+        margin-top: 5px;
+    }
+
+    .card-date {
+        font-size: 0.85rem;
+        color: #a0a0a0;
+    }
+
+    .play-btn {
+        background: rgba(79, 195, 247, 0.1);
+        color: #4fc3f7;
+        border: 1px solid #4fc3f7;
+        padding: 6px 15px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+    .play-btn:hover { background: rgba(79, 195, 247, 0.3); }
+
+    /* استایل صفحه‌بندی (Pagination) */
+    .pagination {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        color: #a0a0a0;
+        font-size: 0.9rem;
+    }
+    .page-btn {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        border: 1px solid #555;
+        padding: 6px 15px;
+        border-radius: 20px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .page-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
+    <h2 style="margin: 0; font-size: 1.3rem;">معماهای ساخته شده توسط من</h2>
+
+    <a href="{% url 'create_puzzle' %}" style="color: #4fc3f7; text-decoration: none; font-size: 1.5rem; background: rgba(79, 195, 247, 0.1); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #4fc3f7;" title="طراحی معمای جدید">
+        +
+    </a>
 </div>
 
-<div style="background: #16213e; border-radius: 12px; padding: 15px; border: 2px solid #fff;">
-    <table style="width: 100%; text-align: right; border-collapse: collapse; color: white;">
-        <thead>
-            <tr style="border-bottom: 2px solid #555;">
-                <th style="padding: 10px;">ردیف</th>
-                <th style="padding: 10px;">متن معما</th>
-                <th style="padding: 10px; text-align: center;">وضعیت</th>
-                <th style="padding: 10px; text-align: left;">عملیات</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in page_obj %}
-            <tr style="border-bottom: 1px solid #333; transition: background 0.2s;">
-                <td style="padding: 15px 10px;">{{ forloop.counter }}</td>
-                <td style="padding: 15px 10px; font-size: 0.9rem;">{{ p.clue_text|truncatechars:40 }}</td>
-                <td style="padding: 15px 10px; text-align: center;">
-                    {% if p.is_verified %}
-                        <span style="background: #4caf50; padding: 3px 8px; border-radius: 10px; font-size: 0.8rem;">تایید شده</span>
-                        <div style="font-size: 0.7rem; margin-top: 5px; color: #aaa;">انتشار: {{ p.publish_date|date:"j F Y" }}</div>
-                    {% else %}
-                        <span style="background: #ff9800; padding: 3px 8px; border-radius: 10px; font-size: 0.8rem;">در انتظار بررسی</span>
-                    {% endif %}
-                </td>
-                <td style="padding: 15px 10px; text-align: left;">
-                    <a href="{% url 'play_private' p.id %}" style="background: rgba(255,255,255,0.1); color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem;">
-                        تست / بازی
-                    </a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" style="text-align: center; padding: 30px;">شما هنوز معمایی طراحی نکرده‌اید!</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="puzzle-list">
+    {% for p in page_obj %}
+    <div class="puzzle-card">
+        <div class="card-header">
+            <p class="clue-text">{{ p.clue_text }} ({{ p.answer_length }})</p>
 
-    <div style="margin-top: 20px; text-align: center; color: #a0a0a0;">
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" style="color: #e0b0ff; margin-left: 10px;">&#8594; قبلی</a>
-        {% endif %}
+            {% if p.is_verified %}
+                <span class="badge badge-verified">تایید شده ✓</span>
+            {% else %}
+                <span class="badge badge-pending">در انتظار ⏳</span>
+            {% endif %}
+        </div>
 
-        <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
-
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" style="color: #e0b0ff; margin-right: 10px;">بعدی &#8592;</a>
-        {% endif %}
+        <div class="card-footer">
+            <div class="card-date">
+                {% if p.is_verified %}
+                    📅 انتشار: {{ p.publish_date|to_jalali }}
+                {% else %}
+                    ✏️ ایجاد: {{ p.date|to_jalali }}
+                {% endif %}
+            </div>
+            <a href="{% url 'play_private' p.id %}" class="play-btn">
+                تست / بازی
+            </a>
+        </div>
     </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px 20px; background: #16213e; border-radius: 16px; border: 1px dashed #555;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">🧩</div>
+        <h3 style="color: #fff; margin-bottom: 10px;">هنوز معمایی نساختی!</h3>
+        <p style="color: #a0a0a0; margin-bottom: 20px;">اولین معمای خودت رو طراحی کن تا اینجا نمایش داده بشه.</p>
+        <a href="{% url 'create_puzzle' %}" class="play-btn" style="display: inline-block;">+ طراحی معمای جدید</a>
+    </div>
+    {% endfor %}
 </div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-btn">بعدی &#8592;</a>
+    {% else %}
+        <span style="opacity: 0.3; padding: 6px 15px; border: 1px solid #555; border-radius: 20px;">بعدی &#8592;</span>
+    {% endif %}
+
+    <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&#8594; قبلی</a>
+    {% else %}
+        <span style="opacity: 0.3; padding: 6px 15px; border: 1px solid #555; border-radius: 20px;">&#8594; قبلی</span>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

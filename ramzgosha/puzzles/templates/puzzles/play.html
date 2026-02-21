@@ -1,4 +1,5 @@
 {% extends 'puzzles/base.html' %}
+{% load jalali_tags %}
 
 {% block content %}
 <style>
@@ -52,7 +53,7 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
     <div style="text-align: center;">
-        {{ puzzle.publish_date|date:"j F Y" }} <br>
+        {{ puzzle.publish_date|to_jalali }} <br>
         <small style="color: #a0a0a0;">طراح: {{ puzzle.author.username }}</small>
     </div>
     <div style="width: 24px;"></div> </div>
