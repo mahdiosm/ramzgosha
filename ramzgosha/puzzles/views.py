@@ -37,29 +37,24 @@ def home(request):
     }
     return render(request, 'puzzles/home.html', context)
 
-
 def play_puzzle(request, date_str):
-    puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True)
     today = timezone.localdate()
-
-    past_puzzles = Puzzle.objects.filter(date__lt=today).order_by('-date')[:5]
-
-    # --- کدهای جدید برای پیدا کردن معمای قبلی و بعدی ---
-    # قبلی یعنی معمایی که تاریخش کوچیکتر از امروز باشه (اولین مورد بعد از مرتب‌سازی نزولی)
+    puzzle = get_object_or_404(Puzzle, publish_date=date_str, is_verified=True, publish_date__lte=today)
+    past_puzzles = Puzzle.objects.filter(publish_date__lt=today, is_verified=True).order_by('-publish_date')[:5]
     prev_puzzle = Puzzle.objects.filter(publish_date__lt=puzzle.publish_date, is_verified=True).order_by(
-        '-publish_date').first()    # بعدی یعنی معمایی که تاریخش بزرگتر از امروز باشه (اولین مورد بعد از مرتب‌سازی صعودی)
-    next_puzzle = Puzzle.objects.filter(publish_date__gt=puzzle.publish_date, is_verified=True).order_by(
-        'publish_date').first()
-    # (اختیاری) اگر نمی‌خوای معماهای فردا و پس‌فردا لو برن، این شرط رو بذار:
-    if next_puzzle and next_puzzle.date > today:
-        next_puzzle = None
+        '-publish_date').first()
+    next_puzzle = Puzzle.objects.filter(
+        publish_date__gt=puzzle.publish_date,
+        publish_date__lte=today,
+        is_verified=True
+    ).order_by('publish_date').first()
 
     context = {
         'puzzle': puzzle,
         'is_correct': None,
         'past_puzzles': past_puzzles,
-        'prev_puzzle': prev_puzzle,  # ارسال به فرانت
-        'next_puzzle': next_puzzle,  # ارسال به فرانت
+        'prev_puzzle': prev_puzzle,
+        'next_puzzle': next_puzzle,
     }
 
     if request.method == "POST":
@@ -72,6 +67,7 @@ def play_puzzle(request, date_str):
             messages.error(request, "اشتباه بود، دوباره تلاش کن.")
 
     return render(request, 'puzzles/play.html', context)
+
 
 def reveal_letter(request, date_str):
     if request.method == "POST":

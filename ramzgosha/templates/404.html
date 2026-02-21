@@ -1,0 +1,51 @@
+{% extends 'puzzles/base.html' %}
+
+{% block content %}
+<style>
+    .error-container {
+        text-align: center;
+        margin-top: 60px;
+        background: #16213e;
+        border: 2px solid #555;
+        border-radius: 15px;
+        padding: 40px 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .error-code {
+        font-size: 6rem;
+        font-weight: 900;
+        margin: 0;
+        color: #e94560;
+        text-shadow: 4px 4px 0px #000;
+        line-height: 1;
+    }
+    .error-title {
+        font-size: 1.5rem;
+        color: #fff;
+        margin-top: 10px;
+    }
+    .error-desc {
+        color: #a0a0a0;
+        margin-bottom: 30px;
+        font-size: 1rem;
+    }
+</style>
+
+<div style="display: flex; justify-content: flex-start; margin-bottom: 10px; width: 100%;">
+    <a href="{% url 'home' %}" style="font-size: 1.5rem; color: white; text-decoration: none;">&#8594;</a>
+</div>
+
+<div class="error-container">
+    <div class="error-code">۴۰۴</div>
+    <h2 class="error-title">صفحه یا معمای مورد نظر پیدا نشد!</h2>
+    <p class="error-desc">
+        احتمالاً آدرس را اشتباه وارد کرده‌اید یا این معما هنوز منتشر نشده است. 
+        <br>
+        معماهای جدید هر روز منتشر می‌شوند.
+    </p>
+    
+    <a href="{% url 'home' %}" class="btn" style="margin-top: 10px;">
+        بازگشت به صفحه اصلی
+    </a>
+</div>
+{% endblock %}
